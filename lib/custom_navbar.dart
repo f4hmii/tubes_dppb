@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'profile_page.dart';
 
 class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -66,7 +67,12 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
               color: Colors.black,
             ),
             onPressed: () {
-              // Navigate to profile page
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ProfilePage(),
+                ),
+              );
             },
           ),
         ),
