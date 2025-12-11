@@ -92,7 +92,7 @@ class _CartPageState extends State<CartPage> {
                       ),
                     ),
                     child: const Text(
-                      'Lanjut ke Checkout',
+                      'Move To Checkout',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
