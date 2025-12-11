@@ -10,28 +10,19 @@ class CheckoutPage extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.black,
-          ),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
         title: const Text(
           'MOVR',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(
-              Icons.shopping_cart,
-              color: Colors.black,
-            ),
+            icon: const Icon(Icons.shopping_cart, color: Colors.black),
             onPressed: () {
               // Navigate to cart page
             },
@@ -39,10 +30,7 @@ class CheckoutPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: IconButton(
-              icon: const Icon(
-                Icons.person,
-                color: Colors.black,
-              ),
+              icon: const Icon(Icons.person, color: Colors.black),
               onPressed: () {
                 // Navigate to profile page
               },
@@ -58,14 +46,11 @@ class CheckoutPage extends StatelessWidget {
             // Title
             const Text(
               'Checkout',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Product summary
             Container(
               padding: const EdgeInsets.all(16),
@@ -101,9 +86,9 @@ class CheckoutPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(width: 16),
-                  
+
                   // Product details
                   Expanded(
                     child: Column(
@@ -116,20 +101,20 @@ class CheckoutPage extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        
+
                         const SizedBox(height: 8),
-                        
+
                         const Text(
-                          '\$29.99',
+                          'Rp 100.000',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
                           ),
                         ),
-                        
+
                         const SizedBox(height: 8),
-                        
+
                         Text(
                           'Quantity: 1',
                           style: TextStyle(
@@ -143,9 +128,9 @@ class CheckoutPage extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Order summary
             Container(
               padding: const EdgeInsets.all(16),
@@ -158,44 +143,32 @@ class CheckoutPage extends StatelessWidget {
                 children: [
                   const Text(
                     'Order Summary',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Product Price'),
-                      Text('\$29.99'),
-                    ],
+                    children: [const Text('Product Price'), Text('Rp 100.000')],
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Shipping Fee'),
-                      Text('\$5.00'),
-                    ],
+                    children: [const Text('Shipping Fee'), Text('Rp 5000')],
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Tax'),
-                      Text('\$2.50'),
-                    ],
+                    children: [const Text('Tax'), Text('Rp 2000')],
                   ),
-                  
+
                   const Divider(height: 24),
-                  
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -207,7 +180,7 @@ class CheckoutPage extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '\$37.49',
+                        'Rp 107.000',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -219,9 +192,9 @@ class CheckoutPage extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Pay Now button
             SizedBox(
               width: double.infinity,
@@ -239,7 +212,9 @@ class CheckoutPage extends StatelessWidget {
                           TextButton(
                             onPressed: () {
                               Navigator.pop(context);
-                              Navigator.pop(context); // Go back to previous screen
+                              Navigator.pop(
+                                context,
+                              ); // Go back to previous screen
                             },
                             child: const Text('OK'),
                           ),

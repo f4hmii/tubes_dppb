@@ -5,6 +5,8 @@ class ProductCard extends StatelessWidget {
   final String title;
   final String price;
   final VoidCallback onCheckoutPressed;
+  final VoidCallback
+  onFavoritePressed; // Tambahan callback untuk tombol favorite
 
   const ProductCard({
     super.key,
@@ -12,6 +14,7 @@ class ProductCard extends StatelessWidget {
     required this.title,
     required this.price,
     required this.onCheckoutPressed,
+    required this.onFavoritePressed, // Wajib diisi
   });
 
   @override
@@ -26,13 +29,55 @@ class ProductCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Bagian gambar (Tetap gunakan AspectRatio 1 disini agar gambar kotak)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: Image.network(imageUrl, fit: BoxFit.cover),
-            ),
+          // Bagian gambar dengan Stack untuk tombol favorite
+          Stack(
+            children: [
+              // Gambar Produk (Tetap gunakan AspectRatio 1 disini agar gambar kotak)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.grey[300],
+                      child: const Icon(
+                        Icons.image_not_supported,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Tombol Favorite di Pojok Kanan Atas
+              Positioned(
+                top: 6,
+                right: 6,
+                child: GestureDetector(
+                  onTap: onFavoritePressed,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.favorite_border,
+                      size: 18,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
 
           const SizedBox(height: 8),
@@ -41,7 +86,6 @@ class ProductCard extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              // Tambahkan MainAxisAlignment agar teks rapi di tengah vertikal sisa space
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
