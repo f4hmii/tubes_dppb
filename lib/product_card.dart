@@ -5,21 +5,20 @@ class ProductCard extends StatelessWidget {
   final String title;
   final String price;
   final VoidCallback onCheckoutPressed;
-  final VoidCallback
-  onFavoritePressed; // Tambahan callback untuk tombol favorite
-
+  final VoidCallback onFavoritePressed;
+  final VoidCallback onCartPressed; 
   const ProductCard({
     super.key,
     required this.imageUrl,
     required this.title,
     required this.price,
     required this.onCheckoutPressed,
-    required this.onFavoritePressed, // Wajib diisi
+    required this.onFavoritePressed,
+    required this.onCartPressed, 
   });
 
   @override
   Widget build(BuildContext context) {
-    // HAPUS AspectRatio di sini, langsung return Container
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey.shade100,
@@ -29,10 +28,9 @@ class ProductCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Bagian gambar dengan Stack untuk tombol favorite
+          // Gambar & Tombol Favorite
           Stack(
             children: [
-              // Gambar Produk (Tetap gunakan AspectRatio 1 disini agar gambar kotak)
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: AspectRatio(
@@ -50,7 +48,6 @@ class ProductCard extends StatelessWidget {
                   ),
                 ),
               ),
-              // Tombol Favorite di Pojok Kanan Atas
               Positioned(
                 top: 6,
                 right: 6,
@@ -79,14 +76,12 @@ class ProductCard extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 8),
 
-          // Bagian title + harga
+          // Judul & Harga
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              // Tambahkan MainAxisAlignment agar teks rapi di tengah vertikal sisa space
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
@@ -112,18 +107,21 @@ class ProductCard extends StatelessWidget {
 
           const SizedBox(height: 8),
 
-          // Tombol Buy + Keranjang
+          // Tombol Cart & Buy
           Row(
             children: [
               Expanded(
-                child: Container(
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.shopping_cart, size: 18),
+                child: GestureDetector(
+                  onTap: onCartPressed, // Aksi tombol keranjang
+                  child: Container(
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.shopping_cart, size: 18),
+                    ),
                   ),
                 ),
               ),

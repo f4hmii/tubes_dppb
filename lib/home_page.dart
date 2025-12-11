@@ -4,9 +4,10 @@ import 'product_card.dart';
 import 'product_detail_page.dart';
 import 'category_page.dart';
 import 'wishlist_page.dart';
+import 'cart_page.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +34,11 @@ class HomePage extends StatelessWidget {
                       width: double.infinity,
                       height: 250,
                       color: const Color(0xFFF2F2F2),
-                      child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+                      child: const Icon(
+                        Icons.image_not_supported,
+                        size: 50,
+                        color: Colors.grey,
+                      ),
                     ),
                   ),
                   Container(
@@ -42,9 +47,23 @@ class HomePage extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Welcome to MOVR', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                        const Text(
+                          'Welcome to MOVR',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
                         const SizedBox(height: 8),
-                        Text('Shop the latest products', style: TextStyle(fontSize: 16, color: Colors.white.withOpacity(0.9))),
+                        Text(
+                          'Shop the latest products',
+                          // Fix: withOpacity deprecated
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white.withValues(alpha: 0.9),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -52,39 +71,67 @@ class HomePage extends StatelessWidget {
               ),
             ),
 
-            // Menu Cepat (Kategori & Favorit)
+            // Menu Cepat
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               child: Row(
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoryPage())),
-                      icon: const Icon(Icons.category_outlined, color: Colors.black),
-                      label: const Text("Kategori", style: TextStyle(color: Colors.black)),
-                      style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12), side: const BorderSide(color: Colors.grey)),
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const CategoryPage()),
+                      ),
+                      icon: const Icon(
+                        Icons.category_outlined,
+                        color: Colors.black,
+                      ),
+                      label: const Text(
+                        "Kategori",
+                        style: TextStyle(color: Colors.black),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: const BorderSide(color: Colors.grey),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WishlistPage())),
-                      icon: const Icon(Icons.favorite_border, color: Colors.black),
-                      label: const Text("Favorit", style: TextStyle(color: Colors.black)),
-                      style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12), side: const BorderSide(color: Colors.grey)),
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const WishlistPage()),
+                      ),
+                      icon: const Icon(
+                        Icons.favorite_border,
+                        color: Colors.black,
+                      ),
+                      label: const Text(
+                        "Favorit",
+                        style: TextStyle(color: Colors.black),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: const BorderSide(color: Colors.grey),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
 
-            // Product Grid
+            // Judul Produk
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               alignment: Alignment.centerLeft,
-              child: const Text('Featured Products', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Featured Products',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
             ),
 
+            // Grid Produk
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -98,16 +145,37 @@ class HomePage extends StatelessWidget {
               ),
               itemBuilder: (context, index) {
                 return ProductCard(
-                  imageUrl: 'https://media.istockphoto.com/id/2183222014/id/foto/seorang-pemuda-bergaya-berpose-dengan-mantel-hitam-dan-beanie-kuning-dengan-latar-belakang.jpg?s=1024x1024&w=is&k=20&c=Iov72DTjc6ocOQwfLfywRuW0GKoQK76ZwWqa_DePRpQ=',
+                  imageUrl:
+                      'https://media.istockphoto.com/id/2183222014/id/foto/seorang-pemuda-bergaya-berpose-dengan-mantel-hitam-dan-beanie-kuning-dengan-latar-belakang.jpg?s=1024x1024&w=is&k=20&c=Iov72DTjc6ocOQwfLfywRuW0GKoQK76ZwWqa_DePRpQ=',
                   title: 'Baju Pria',
                   price: 'Rp ${(index + 1) * 10000}',
-                  // --- WAJIB ADA: onFavoritePressed ---
+
+                  // Navigasi ke Wishlist
                   onFavoritePressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const WishlistPage()));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const WishlistPage(),
+                      ),
+                    );
                   },
-                  // ------------------------------------
+
+                  // Navigasi ke Cart
+                  onCartPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const CartPage()),
+                    );
+                  },
+
+                  // Navigasi ke Detail
                   onCheckoutPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductDetailPage()));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProductDetailPage(),
+                      ),
+                    );
                   },
                 );
               },

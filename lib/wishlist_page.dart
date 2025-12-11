@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'product_card.dart';
 import 'product_detail_page.dart';
+import 'cart_page.dart';
 
 class WishlistPage extends StatelessWidget {
   const WishlistPage({super.key});
@@ -23,12 +24,12 @@ class WishlistPage extends StatelessWidget {
       ),
       body: GridView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: 4, // Data dummy
+        itemCount: 4,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
-          childAspectRatio: 0.58, 
+          childAspectRatio: 0.58,
         ),
         itemBuilder: (context, index) {
           return ProductCard(
@@ -36,20 +37,24 @@ class WishlistPage extends StatelessWidget {
                 'https://media.istockphoto.com/id/2183222014/id/foto/seorang-pemuda-bergaya-berpose-dengan-mantel-hitam-dan-beanie-kuning-dengan-latar-belakang.jpg?s=1024x1024&w=is&k=20&c=Iov72DTjc6ocOQwfLfywRuW0GKoQK76ZwWqa_DePRpQ=',
             title: 'Item Favorit ${index + 1}',
             price: 'Rp ${(index + 1) * 25000}',
-            // --- PERBAIKAN: Tambahkan onFavoritePressed ---
+            
             onFavoritePressed: () {
-              // Aksi jika tombol hati ditekan di halaman wishlist (misal: hapus item)
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("Sudah ada di favorit!")),
               );
             },
-            // ----------------------------------------------
+            
+            onCartPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CartPage()),
+              );
+            },
+            
             onCheckoutPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const ProductDetailPage(),
-                ),
+                MaterialPageRoute(builder: (context) => const ProductDetailPage()),
               );
             },
           );

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'checkout_page.dart'; // Import halaman checkout yang sudah ada
+import 'checkout_page.dart'; 
 
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
@@ -26,7 +26,7 @@ class CartPage extends StatelessWidget {
           Expanded(
             child: ListView.separated(
               padding: const EdgeInsets.all(16),
-              itemCount: 3, // Contoh data dummy
+              itemCount: 3, 
               separatorBuilder: (context, index) => const SizedBox(height: 16),
               itemBuilder: (context, index) {
                 return _buildCartItem(index);

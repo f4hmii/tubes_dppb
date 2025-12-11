@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
-import 'custom_navbar.dart';
-import 'product_card.dart';
 import 'home_page.dart';
-import 'product_detail_page.dart';
-import 'checkout_page.dart';
 
 void main() {
   runApp(const MovrApp());
 }
 
 class MovrApp extends StatelessWidget {
-  const MovrApp({Key? key}) : super(key: key);
+  const MovrApp({super.key});
 
   @override
   Widget build(BuildContext context) {
