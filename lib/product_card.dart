@@ -4,17 +4,20 @@ class ProductCard extends StatelessWidget {
   final String imageUrl;
   final String title;
   final String price;
+  final bool isFavorite; // Status apakah produk ini favorit
   final VoidCallback onCheckoutPressed;
   final VoidCallback onFavoritePressed;
-  final VoidCallback onCartPressed; 
+  final VoidCallback onCartPressed;
+
   const ProductCard({
     super.key,
     required this.imageUrl,
     required this.title,
     required this.price,
+    this.isFavorite = false, // Default tidak favorit
     required this.onCheckoutPressed,
     required this.onFavoritePressed,
-    required this.onCartPressed, 
+    required this.onCartPressed,
   });
 
   @override
@@ -56,20 +59,22 @@ class ProductCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.favorite_border,
+                    child: Icon(
+                      // Ganti ikon berdasarkan status isFavorite
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
                       size: 18,
-                      color: Colors.black,
+                      // Warna merah jika favorit, hitam jika tidak
+                      color: isFavorite ? Colors.red : Colors.black,
                     ),
                   ),
                 ),
@@ -112,7 +117,7 @@ class ProductCard extends StatelessWidget {
             children: [
               Expanded(
                 child: GestureDetector(
-                  onTap: onCartPressed, // Aksi tombol keranjang
+                  onTap: onCartPressed,
                   child: Container(
                     height: 40,
                     decoration: BoxDecoration(

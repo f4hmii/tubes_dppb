@@ -58,7 +58,6 @@ class HomePage extends StatelessWidget {
                         const SizedBox(height: 8),
                         Text(
                           'Shop the latest products',
-                          // Fix: withOpacity deprecated
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.white.withValues(alpha: 0.9),
@@ -149,26 +148,21 @@ class HomePage extends StatelessWidget {
                       'https://media.istockphoto.com/id/2183222014/id/foto/seorang-pemuda-bergaya-berpose-dengan-mantel-hitam-dan-beanie-kuning-dengan-latar-belakang.jpg?s=1024x1024&w=is&k=20&c=Iov72DTjc6ocOQwfLfywRuW0GKoQK76ZwWqa_DePRpQ=',
                   title: 'Baju Pria',
                   price: 'Rp ${(index + 1) * 10000}',
-
-                  // Navigasi ke Wishlist
+                  // Di Home, isFavorite false agar ikonnya outline
+                  isFavorite: false,
                   onFavoritePressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const WishlistPage(),
-                      ),
+                    // Logic: Simpan ke database/state management di sini
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Sudah ada di favorite!")),
                     );
+                    // Navigasi ke wishlist setelah menambah
                   },
-
-                  // Navigasi ke Cart
                   onCartPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => const CartPage()),
                     );
                   },
-
-                  // Navigasi ke Detail
                   onCheckoutPressed: () {
                     Navigator.push(
                       context,
