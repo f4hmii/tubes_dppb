@@ -22,19 +22,12 @@ class HomePage extends StatelessWidget {
             Container(
               height: 250,
               width: double.infinity,
-              decoration: const BoxDecoration(color: Color(0xFFF2F2F2)),
               child: Stack(
                 children: [
                   Image.network(
                     'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=1074&auto=format&fit=crop',
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      width: double.infinity,
-                      height: 250,
-                      color: const Color(0xFFF2F2F2),
-                      child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
-                    ),
                   ),
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -52,7 +45,7 @@ class HomePage extends StatelessWidget {
               ),
             ),
 
-            // Menu Cepat
+            // Menu 
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               child: Row(
@@ -98,7 +91,7 @@ class HomePage extends StatelessWidget {
               ),
               itemBuilder: (context, index) {
                 return ProductCard(
-                  imageUrl: 'https://media.istockphoto.com/id/2183222014/id/foto/seorang-pemuda-bergaya-berpose-dengan-mantel-hitam-dan-beanie-kuning.jpg',
+                  imageUrl:'https://media.istockphoto.com/id/2183222014/id/foto/seorang-pemuda-bergaya-berpose-dengan-mantel-hitam-dan-beanie-kuning-dengan-latar-belakang.jpg?s=1024x1024&w=is&k=20&c=Iov72DTjc6ocOQwfLfywRuW0GKoQK76ZwWqa_DePRpQ=',
                   title: 'Baju Pria',
                   price: 'Rp 10000',
                   onFavoritePressed: () {

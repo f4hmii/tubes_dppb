@@ -8,14 +8,13 @@ class ProductDetailPage extends StatelessWidget {
   final String imageUrl;
 
   const ProductDetailPage({
-    Key? key,
     this.productName = 'Baju Pria',
     this.price = 'Rp 100.000',
     this.description =
         'Baju pria ini memiliki desain sederhana namun tetap terlihat keren. Bahannya nyaman, ringan, dan enak dipakai seharian. Warna netral membuatnya mudah dipadukan dengan berbagai jenis celana. Cocok untuk dipakai santai maupun acara semi formal',
     this.imageUrl =
         'https://media.istockphoto.com/id/2183222014/id/foto/seorang-pemuda-bergaya-berpose-dengan-mantel-hitam-dan-beanie-kuning-dengan-latar-belakang.jpg?s=1024x1024&w=is&k=20&c=Iov72DTjc6ocOQwfLfywRuW0GKoQK76ZwWqa_DePRpQ=',
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +37,6 @@ class ProductDetailPage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.shopping_cart, color: Colors.black),
             onPressed: () {
-              // Navigate to cart page
             },
           ),
           Padding(
@@ -46,7 +44,6 @@ class ProductDetailPage extends StatelessWidget {
             child: IconButton(
               icon: const Icon(Icons.person, color: Colors.black),
               onPressed: () {
-                // Navigate to profile page
               },
             ),
           ),
@@ -58,28 +55,11 @@ class ProductDetailPage extends StatelessWidget {
           children: [
             // Product image
             Container(
-              width: double.infinity,
-              height: 400,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF2F2F2),
-                borderRadius: const BorderRadius.vertical(
-                  bottom: Radius.circular(16),
-                ),
-              ),
+              height: 300,
               child: Image.network(
                 imageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  width: double.infinity,
-                  height: 400,
-                  color: const Color(0xFFF2F2F2),
-                  child: const Icon(
-                    Icons.image_not_supported_outlined,
-                    size: 60,
-                    color: Colors.grey,
-                  ),
                 ),
-              ),
             ),
 
             // Product details
@@ -111,7 +91,7 @@ class ProductDetailPage extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
-                  // Description title
+                  // Description
                   const Text(
                     'Description',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -119,7 +99,6 @@ class ProductDetailPage extends StatelessWidget {
 
                   const SizedBox(height: 8),
 
-                  // Description text
                   Text(
                     description,
                     style: TextStyle(

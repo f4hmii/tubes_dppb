@@ -14,12 +14,11 @@ class ProductCard extends StatelessWidget {
     required this.title,
     required this.price,
     required this.onCheckoutPressed,
-    required this.onFavoritePressed, // Wajib diisi
+    required this.onFavoritePressed, 
   });
 
   @override
   Widget build(BuildContext context) {
-    // HAPUS AspectRatio di sini, langsung return Container
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey.shade100,
@@ -29,10 +28,8 @@ class ProductCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Bagian gambar dengan Stack untuk tombol favorite
           Stack(
             children: [
-              // Gambar Produk (Tetap gunakan AspectRatio 1 disini agar gambar kotak)
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: AspectRatio(
@@ -40,17 +37,11 @@ class ProductCard extends StatelessWidget {
                   child: Image.network(
                     imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.grey[300],
-                      child: const Icon(
-                        Icons.image_not_supported,
-                        color: Colors.grey,
-                      ),
                     ),
                   ),
                 ),
-              ),
-              // Tombol Favorite di Pojok Kanan Atas
+              
+              // Tombol Favorite 
               Positioned(
                 top: 6,
                 right: 6,
@@ -111,7 +102,7 @@ class ProductCard extends StatelessWidget {
 
           const SizedBox(height: 8),
 
-          // Tombol Buy + Keranjang
+          // Tombol Buy  Keranjang
           Row(
             children: [
               Expanded(

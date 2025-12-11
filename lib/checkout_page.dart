@@ -8,7 +8,6 @@ class CheckoutPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
@@ -20,30 +19,12 @@ class CheckoutPage extends StatelessWidget {
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.shopping_cart, color: Colors.black),
-            onPressed: () {
-              // Navigate to cart page
-            },
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: IconButton(
-              icon: const Icon(Icons.person, color: Colors.black),
-              onPressed: () {
-                // Navigate to profile page
-              },
-            ),
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title
             const Text(
               'Checkout',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
@@ -51,7 +32,7 @@ class CheckoutPage extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // Product summary
+            // Product
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -65,7 +46,6 @@ class CheckoutPage extends StatelessWidget {
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: ClipRRect(
@@ -73,23 +53,13 @@ class CheckoutPage extends StatelessWidget {
                       child: Image.network(
                         'https://media.istockphoto.com/id/2183222014/id/foto/seorang-pemuda-bergaya-berpose-dengan-mantel-hitam-dan-beanie-kuning-dengan-latar-belakang.jpg?s=1024x1024&w=is&k=20&c=Iov72DTjc6ocOQwfLfywRuW0GKoQK76ZwWqa_DePRpQ=',
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          width: 100,
-                          height: 100,
-                          color: const Color(0xFFF2F2F2),
-                          child: const Icon(
-                            Icons.image_not_supported_outlined,
-                            size: 30,
-                            color: Colors.grey,
-                          ),
-                        ),
                       ),
                     ),
                   ),
 
                   const SizedBox(width: 16),
 
-                  // Product details
+                  // Product detail
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,7 +101,7 @@ class CheckoutPage extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // Order summary
+            // Order 
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -195,7 +165,7 @@ class CheckoutPage extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // Pay Now button
+            // Pay button
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -206,15 +176,15 @@ class CheckoutPage extends StatelessWidget {
                     context: context,
                     builder: (BuildContext context) {
                       return AlertDialog(
-                        title: const Text('Payment Successful!'),
-                        content: const Text('Thank you for your purchase.'),
+                        title: const Text('Pembayaran Sukses!'),
+                        content: const Text('Terima kasih.'),
                         actions: [
                           TextButton(
                             onPressed: () {
                               Navigator.pop(context);
                               Navigator.pop(
                                 context,
-                              ); // Go back to previous screen
+                              ); 
                             },
                             child: const Text('OK'),
                           ),
