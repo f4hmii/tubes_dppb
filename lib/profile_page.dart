@@ -11,8 +11,8 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String userName = 'John Doe';
-  String userEmail = 'john.doe@example.com';
+  String userName = 'YOU';
+  String userEmail = 'budi@example.com';
   String userPhone = '+62 812 3456 7890';
   String userGender = 'Laki-laki';
   List<Address> addresses = [];
@@ -82,11 +82,19 @@ class _ProfilePageState extends State<ProfilePage> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.grey[300],
+                      border: Border.all(color: Colors.grey.shade400, width: 2),
                     ),
-                    child: const Icon(
-                      Icons.person,
-                      size: 40,
-                      color: Colors.grey,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(40),
+                      child: Image.network(
+                        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=500&fit=crop',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Icon(
+                          Icons.person,
+                          size: 40,
+                          color: Colors.grey[600],
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),

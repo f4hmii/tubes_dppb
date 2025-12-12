@@ -14,7 +14,7 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
-        child: CustomNavbar(title: 'MOVR'),
+        child: CustomNavbar(),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -27,7 +27,7 @@ class HomePage extends StatelessWidget {
               child: Stack(
                 children: [
                   Image.network(
-                    'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+                    'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=1074&auto=format&fit=crop',
                     width: double.infinity,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
@@ -62,6 +62,10 @@ class HomePage extends StatelessWidget {
                             fontSize: 16,
                             color: Colors.white.withValues(alpha: 0.9),
                           ),
+                        ),
+                        Text(
+                          'Shop the latest products',
+                          style: TextStyle(fontSize: 16, color: Colors.white),
                         ),
                       ],
                     ),
@@ -128,6 +132,10 @@ class HomePage extends StatelessWidget {
                 'Featured Products',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
+              child: const Text(
+                'Produk Kami',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
             ),
 
             // Grid Produk
@@ -150,6 +158,10 @@ class HomePage extends StatelessWidget {
                   price: 'Rp ${(index + 1) * 10000}',
                   // Di Home, isFavorite false agar ikonnya outline
                   isFavorite: false,
+                  imageUrl:
+                      'https://media.istockphoto.com/id/2183222014/id/foto/seorang-pemuda-bergaya-berpose-dengan-mantel-hitam-dan-beanie-kuning.jpg',
+                  title: 'Baju Pria',
+                  price: 'Rp 10000',
                   onFavoritePressed: () {
                     // Logic: Simpan ke database/state management di sini
                     ScaffoldMessenger.of(context).showSnackBar(
