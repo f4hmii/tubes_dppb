@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
-import 'checkout_page.dart'; // Import halaman checkout yang sudah ada
+import 'checkout_page.dart';
 
-class CartPage extends StatelessWidget {
+class CartPage extends StatefulWidget {
   const CartPage({super.key});
 
+  @override
+  State<CartPage> createState() => _CartPageState();
+}
+
+class _CartPageState extends State<CartPage> {
+  // Data dummy untuk simulasi list produk
+  final List<int> _cartItems = [1, 2, 3];
+  // header
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,14 +32,17 @@ class CartPage extends StatelessWidget {
         children: [
           // List Produk di Keranjang
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: 3, // Contoh data dummy
-              separatorBuilder: (context, index) => const SizedBox(height: 16),
-              itemBuilder: (context, index) {
-                return _buildCartItem(index);
-              },
-            ),
+            child: _cartItems.isEmpty
+                ? const Center(child: Text("Keranjang kosong"))
+                : ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _cartItems.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 16),
+                    itemBuilder: (context, index) {
+                      return _buildCartItem(index);
+                    },
+                  ),
           ),
           // Bagian Total & Checkout
           Container(
@@ -81,7 +92,7 @@ class CartPage extends StatelessWidget {
                       ),
                     ),
                     child: const Text(
-                      'Lanjut ke Checkout',
+                      'Move To Checkout',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -134,19 +145,18 @@ class CartPage extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  'Rp 10.000',
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
+                Text('Rp 10.000', style: TextStyle(color: Colors.grey[600])),
               ],
             ),
           ),
-          // Kontrol Quantity
+          // Kontrol Quantity & Hapus
           Column(
             children: [
               IconButton(
                 icon: const Icon(Icons.delete_outline, color: Colors.red),
-                onPressed: () {},
+                onPressed: () {
+                  _showDeleteConfirmationDialog(context, index);
+                },
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -154,12 +164,54 @@ class CartPage extends StatelessWidget {
                   color: Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Text('1x', style: TextStyle(fontWeight: FontWeight.bold)),
-              )
+                child: const Text(
+                  '1x',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
             ],
-          )
+          ),
         ],
       ),
+    );
+  }
+
+  // Fungsi untuk menampilkan Alert Dialog
+  void _showDeleteConfirmationDialog(BuildContext context, int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Hapus Produk"),
+          content: const Text(
+            "Apakah Anda yakin ingin menghapus produk ini dari keranjang?",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Tutup dialog (Batal)
+              },
+              child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () {
+                // Hapus item dari list
+                setState(() {
+                  _cartItems.removeAt(index);
+                });
+                Navigator.of(context).pop(); // Tutup dialog
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Produk berhasil dihapus"),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+              child: const Text("Hapus", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
     );
   }
 }
