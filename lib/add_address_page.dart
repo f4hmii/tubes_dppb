@@ -4,7 +4,7 @@ import 'models/address_model.dart';
 class AddAddressPage extends StatefulWidget {
   final Function(Address)? onAddressAdded;
 
-  const AddAddressPage({Key? key, this.onAddressAdded}) : super(key: key);
+  const AddAddressPage({super.key, this.onAddressAdded});
 
   @override
   State<AddAddressPage> createState() => _AddAddressPageState();

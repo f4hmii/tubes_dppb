@@ -5,7 +5,7 @@
   class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
     final String title;
 
-    const CustomNavbar({Key? key, this.title = 'MOVR'}) : super(key: key);
+    const CustomNavbar({super.key, this.title = 'MOVR'});
 
     @override
     Widget build(BuildContext context) {

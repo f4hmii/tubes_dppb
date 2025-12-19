@@ -4,20 +4,21 @@ class ProductCard extends StatelessWidget {
   final String imageUrl;
   final String title;
   final String price;
-  final bool isFavorite; // Status apakah produk ini favorit
+  final bool isFavorite;
   final VoidCallback onCheckoutPressed;
   final VoidCallback onFavoritePressed;
   final VoidCallback onCartPressed;
 
+  // PERBAIKAN DI SINI:
   const ProductCard({
     super.key,
     required this.imageUrl,
     required this.title,
     required this.price,
-    this.isFavorite = false, // Default tidak favorit
+    this.isFavorite = false,
     required this.onCheckoutPressed,
-    required this.onFavoritePressed,
-    required this.onCartPressed,
+    required this.onFavoritePressed, // Tambahkan ini
+    required this.onCartPressed,     // Tambahkan ini
   });
 
   @override
@@ -31,7 +32,7 @@ class ProductCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Gambar & Tombol Favorite
+
           Stack(
             children: [
               ClipRRect(
@@ -41,16 +42,10 @@ class ProductCard extends StatelessWidget {
                   child: Image.network(
                     imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.grey[300],
-                      child: const Icon(
-                        Icons.image_not_supported,
-                        color: Colors.grey,
-                      ),
                     ),
                   ),
                 ),
-              ),
+
               Positioned(
                 top: 6,
                 right: 6,
@@ -112,7 +107,7 @@ class ProductCard extends StatelessWidget {
 
           const SizedBox(height: 8),
 
-          // Tombol Cart & Buy
+
           Row(
             children: [
               Expanded(
