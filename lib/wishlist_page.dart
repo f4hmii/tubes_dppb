@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'product_card.dart';
-import 'product_detail_page.dart';
-import 'cart_page.dart';
+// Import API dan Halaman Detail
+import 'package:movr/services/api_service.dart';
+import 'package:movr/product_detail_page.dart';
 
 class WishlistPage extends StatefulWidget {
   const WishlistPage({super.key});
@@ -11,77 +11,197 @@ class WishlistPage extends StatefulWidget {
 }
 
 class _WishlistPageState extends State<WishlistPage> {
-  // Simulasi data produk favorit
-  final List<Map<String, dynamic>> _favoriteItems = List.generate(
-    4,
-    (index) => {
-      'id': index,
-      'title': 'Item Favorit ${index + 1}',
-      'price': 'Rp ${(index + 1) * 25000}',
-      'imageUrl':
-          'https://media.istockphoto.com/id/2183222014/id/foto/seorang-pemuda-bergaya-berpose-dengan-mantel-hitam-dan-beanie-kuning-dengan-latar-belakang.jpg?s=1024x1024&w=is&k=20&c=Iov72DTjc6ocOQwfLfywRuW0GKoQK76ZwWqa_DePRpQ=',
-    },
-  );
+  final ApiService _apiService = ApiService();
+  
+  // Variabel untuk menampung data dari API
+  List<dynamic> _wishlistItems = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWishlistData();
+  }
+
+  // Fungsi: Ambil data API lalu ambil 5 item pertama sebagai simulasi wishlist
+  Future<void> _loadWishlistData() async {
+    try {
+      final products = await _apiService.getAllProducts();
+      if (mounted) {
+        setState(() {
+          // KITA AMBIL 5 PRODUK PERTAMA SEBAGAI CONTOH WISHLIST
+          _wishlistItems = products.take(5).toList(); 
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memuat wishlist: $e')),
+        );
+      }
+    }
+  }
+
+  // Fungsi Hapus Item (Secara Lokal)
+  void _removeFromWishlist(int index) {
+    final removedItem = _wishlistItems[index];
+    setState(() {
+      _wishlistItems.removeAt(index);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${removedItem['title']} dihapus'),
+        action: SnackBarAction(
+          label: 'BATAL',
+          onPressed: () {
+            setState(() {
+              _wishlistItems.insert(index, removedItem);
+            });
+          },
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
         title: const Text(
-          'Favorit Saya',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          "Wishlist Saya",
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
         ),
+        backgroundColor: Colors.white,
+        elevation: 0.5,
         centerTitle: true,
+        automaticallyImplyLeading: false,
       ),
-      body: _favoriteItems.isEmpty
-          ? const Center(child: Text("Belum ada produk favorit"))
-          : GridView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _favoriteItems.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.58,
-              ),
-              itemBuilder: (context, index) {
-                final item = _favoriteItems[index];
-                return ProductCard(
-                  imageUrl: item['imageUrl'],
-                  title: item['title'],
-                  price: item['price'],
-                  // Di halaman ini, semua item pasti favorit, jadi true
-               
+      // LOGIKA TAMPILAN: Loading -> Kosong -> Ada Data
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.black))
+          : _wishlistItems.isEmpty
+              ? _buildEmptyState()
+              : ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _wishlistItems.length,
+                  separatorBuilder: (context, index) => const Divider(height: 30, color: Colors.transparent),
+                  itemBuilder: (context, index) {
+                    final item = _wishlistItems[index];
+                    return _buildWishlistItem(item, index);
+                  },
+                ),
+    );
+  }
 
-                  // Aksi Hapus dari Favorit
-                  onFavoritePressed: () {
-                    setState(() {
-                      _favoriteItems.removeAt(index);
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Produk dihapus dari favorit"),
-                        duration: Duration(seconds: 1),
-                      ),
-                    );
-                  },
-                  onCheckoutPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ProductDetailPage(),
-                      ),
-                    );
-                  },
-                );
-              },
+  // Widget Tampilan Item (Terkoneksi Data API)
+  Widget _buildWishlistItem(dynamic item, int index) {
+    // Format Harga
+    final String formattedPrice = 'Rp ${(item['price'] * 15000).toStringAsFixed(0)}';
+
+    return GestureDetector(
+      onTap: () {
+        // PERBAIKAN NAVIGASI KE DETAIL (Mengirim Data Lengkap)
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductDetailPage(
+              productName: item['title'],
+              price: formattedPrice,
+              description: item['description'] ?? 'No Description',
+              imageUrl: item['image'],
             ),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+          border: Border.all(color: Colors.grey.shade100),
+        ),
+        child: Row(
+          children: [
+            // Gambar Produk dari API
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                item['image'],
+                width: 80,
+                height: 80,
+                fit: BoxFit.contain, // Contain agar gambar produk utuh
+                errorBuilder: (ctx, error, stack) => const Icon(Icons.error),
+              ),
+            ),
+            const SizedBox(width: 16),
+            // Info Produk
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item['title'],
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    maxLines: 2, // Maksimal 2 baris agar judul panjang muat
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  // Rating (Pengganti Size karena API tidak punya data Size)
+                  Row(
+                    children: [
+                      const Icon(Icons.star, size: 14, color: Colors.amber),
+                      const SizedBox(width: 4),
+                      Text(
+                        "${item['rating']['rate']} (${item['rating']['count']})",
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    formattedPrice,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.blueAccent),
+                  ),
+                ],
+              ),
+            ),
+            // Tombol Delete
+            IconButton(
+              onPressed: () => _removeFromWishlist(index),
+              icon: const Icon(Icons.favorite, color: Colors.red),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.favorite_border, size: 80, color: Colors.grey[300]),
+          const SizedBox(height: 16),
+          const Text(
+            "Wishlist kamu masih kosong",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
+          ),
+        ],
+      ),
     );
   }
 }

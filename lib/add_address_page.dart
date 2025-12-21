@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'models/address_model.dart';
+import 'models/address_model.dart'; // Pastikan path ini benar
 
 class AddAddressPage extends StatefulWidget {
   final Function(Address)? onAddressAdded;
 
-  const AddAddressPage({Key? key, this.onAddressAdded}) : super(key: key);
+  const AddAddressPage({super.key, this.onAddressAdded});
 
   @override
   State<AddAddressPage> createState() => _AddAddressPageState();
@@ -16,7 +16,8 @@ class _AddAddressPageState extends State<AddAddressPage> {
   final TextEditingController provinceController = TextEditingController();
   final TextEditingController cityController = TextEditingController();
   final TextEditingController districtController = TextEditingController();
-  final TextEditingController villageController = TextEditingController();
+  // GANTI KELURAHAN JADI KODE POS AGAR SESUAI MODEL
+  final TextEditingController postalCodeController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
 
   @override
@@ -26,7 +27,7 @@ class _AddAddressPageState extends State<AddAddressPage> {
     provinceController.dispose();
     cityController.dispose();
     districtController.dispose();
-    villageController.dispose();
+    postalCodeController.dispose();
     addressController.dispose();
     super.dispose();
   }
@@ -38,45 +39,14 @@ class _AddAddressPageState extends State<AddAddressPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.black,
-          ),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'MOVR',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
+          'Tambah Alamat',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.shopping_cart,
-              color: Colors.black,
-            ),
-            onPressed: () {
-              // Navigate to cart page
-            },
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: IconButton(
-              icon: const Icon(
-                Icons.person,
-                color: Colors.black,
-              ),
-              onPressed: () {
-                // Navigate to profile page
-              },
-            ),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -84,13 +54,9 @@ class _AddAddressPageState extends State<AddAddressPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Page title
               const Text(
-                'Tambah Alamat Baru',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                'Isi Detail Alamat',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
 
               const SizedBox(height: 24),
@@ -99,7 +65,7 @@ class _AddAddressPageState extends State<AddAddressPage> {
               _buildInputField(
                 label: 'Label Alamat',
                 controller: labelController,
-                hintText: 'Contoh: Rumah, Kantor, dll',
+                hintText: 'Contoh: Rumah, Kantor, Kosan',
               ),
 
               const SizedBox(height: 16),
@@ -140,11 +106,12 @@ class _AddAddressPageState extends State<AddAddressPage> {
 
               const SizedBox(height: 16),
 
-              // Kelurahan
+              // Kode Pos (PENGGANTI KELURAHAN)
               _buildInputField(
-                label: 'Kelurahan',
-                controller: villageController,
-                hintText: 'Masukkan kelurahan',
+                label: 'Kode Pos',
+                controller: postalCodeController,
+                hintText: 'Masukkan kode pos',
+                keyboardType: TextInputType.number,
               ),
 
               const SizedBox(height: 16),
@@ -154,28 +121,22 @@ class _AddAddressPageState extends State<AddAddressPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Alamat Lengkap',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    'Alamat Lengkap (Jalan, No. Rumah, RT/RW)',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: addressController,
-                    maxLines: 5,
+                    maxLines: 3,
                     decoration: InputDecoration(
-                      hintText: 'Masukkan alamat lengkap Anda',
+                      hintText: 'Contoh: Jl. Sukabiryu No. 10, RT 01/02',
                       filled: true,
                       fillColor: const Color(0xFFF2F2F2),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide.none,
                       ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
+                      contentPadding: const EdgeInsets.all(16),
                     ),
                   ),
                 ],
@@ -183,17 +144,19 @@ class _AddAddressPageState extends State<AddAddressPage> {
 
               const SizedBox(height: 32),
 
+              // TOMBOL SIMPAN
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
                   onPressed: () {
+                    // Validasi Input
                     if (labelController.text.isEmpty ||
                         nameController.text.isEmpty ||
                         provinceController.text.isEmpty ||
                         cityController.text.isEmpty ||
                         districtController.text.isEmpty ||
-                        villageController.text.isEmpty ||
+                        postalCodeController.text.isEmpty ||
                         addressController.text.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -204,27 +167,24 @@ class _AddAddressPageState extends State<AddAddressPage> {
                       return;
                     }
 
-                    // Create Address object
+                    // MEMBUAT OBJEK ADDRESS (SESUAI MODEL TERBARU)
                     final newAddress = Address(
                       label: labelController.text,
                       name: nameController.text,
                       province: provinceController.text,
                       city: cityController.text,
                       district: districtController.text,
-                      village: villageController.text,
+                      postalCode: postalCodeController.text, // Data Kode Pos
                       fullAddress: addressController.text,
                     );
 
-                    // Call callback if provided
+                    // Kirim data balik ke ProfilePage
                     if (widget.onAddressAdded != null) {
                       widget.onAddressAdded!(newAddress);
                     }
 
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Alamat berhasil ditambahkan'),
-                        duration: Duration(seconds: 2),
-                      ),
+                      const SnackBar(content: Text('Alamat berhasil disimpan')),
                     );
 
                     Navigator.pop(context);
@@ -237,38 +197,7 @@ class _AddAddressPageState extends State<AddAddressPage> {
                   ),
                   child: const Text(
                     'Simpan Alamat',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Cancel button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    side: const BorderSide(color: Colors.black),
-                  ),
-                  child: const Text(
-                    'Batal',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
               ),
@@ -292,10 +221,7 @@ class _AddAddressPageState extends State<AddAddressPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         TextField(
@@ -309,10 +235,7 @@ class _AddAddressPageState extends State<AddAddressPage> {
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide.none,
             ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
         ),
       ],

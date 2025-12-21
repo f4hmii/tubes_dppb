@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'home_page.dart';
-
+import 'login_page.dart'; // Import halaman login
 
 void main() {
   runApp(const MovrApp());
 }
 
 class MovrApp extends StatelessWidget {
-  const MovrApp({Key? key}) : super(key: key);
+  const MovrApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,8 +15,10 @@ class MovrApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
         scaffoldBackgroundColor: Colors.white,
+        // Gunakan font default yang bersih atau Google Fonts jika mau
       ),
-      home: const HomePage(),
+      // Set home ke LoginPage
+      home: const LoginPage(), 
       debugShowCheckedModeBanner: false,
     );
   }

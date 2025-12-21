@@ -4,17 +4,21 @@ class ProductCard extends StatelessWidget {
   final String imageUrl;
   final String title;
   final String price;
+  final bool isFavorite;
   final VoidCallback onCheckoutPressed;
-  final VoidCallback
-  onFavoritePressed; // Tambahan callback untuk tombol favorite
+  final VoidCallback onFavoritePressed;
+  final VoidCallback onCartPressed;
 
+  // PERBAIKAN DI SINI:
   const ProductCard({
     super.key,
     required this.imageUrl,
     required this.title,
     required this.price,
+    this.isFavorite = false,
     required this.onCheckoutPressed,
-    required this.onFavoritePressed, 
+    required this.onFavoritePressed, // Tambahkan ini
+    required this.onCartPressed,     // Tambahkan ini
   });
 
   @override
@@ -28,6 +32,8 @@ class ProductCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+
+
           Stack(
             children: [
               ClipRRect(
@@ -40,8 +46,7 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
                 ),
-              
-              // Tombol Favorite 
+
               Positioned(
                 top: 6,
                 right: 6,
@@ -60,20 +65,21 @@ class ProductCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.favorite_border,
+                    child: Icon(
+                      // Ganti ikon berdasarkan status isFavorite
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
                       size: 18,
-                      color: Colors.black,
+                      // Warna merah jika favorit, hitam jika tidak
+                      color: isFavorite ? Colors.red : Colors.black,
                     ),
                   ),
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 8),
 
-          // Bagian title + harga
+          // Judul & Harga
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,18 +108,21 @@ class ProductCard extends StatelessWidget {
 
           const SizedBox(height: 8),
 
-          // Tombol Buy  Keranjang
+
           Row(
             children: [
               Expanded(
-                child: Container(
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.shopping_cart, size: 18),
+                child: GestureDetector(
+                  onTap: onCartPressed,
+                  child: Container(
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.shopping_cart, size: 18),
+                    ),
                   ),
                 ),
               ),

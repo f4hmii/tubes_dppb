@@ -1,64 +1,140 @@
 import 'package:flutter/material.dart';
+import 'services/api_service.dart'; // Sesuaikan path import ini
 
-class CategoryPage extends StatelessWidget {
+class CategoryPage extends StatefulWidget {
   const CategoryPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> categories = [
-      {'icon': Icons.checkroom, 'name': 'Pakaian Pria'},
-      {'icon': Icons.woman, 'name': 'Pakaian Wanita'},
-      {'icon': Icons.watch, 'name': 'Aksesoris'},
-      {'icon': Icons.sports_soccer, 'name': 'Olahraga'},
-      {'icon': Icons.child_care, 'name': 'Anak-anak'},
-      {'icon': Icons.percent, 'name': 'Promo'},
-    ];
+  State<CategoryPage> createState() => _CategoryPageState();
+}
 
+class _CategoryPageState extends State<CategoryPage> {
+  final ApiService _apiService = ApiService();
+  late Future<List<dynamic>> _categoriesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // Panggil API: https://fakestoreapi.com/products/categories
+    _categoriesFuture = _apiService.getAllCategories();
+  }
+
+  // Fungsi Helper: Memberikan gambar berdasarkan nama kategori dari API
+  String _getCategoryImage(String category) {
+    switch (category) {
+      case 'electronics':
+        return 'https://images.unsplash.com/photo-1498049381961-05ebc2b46624?auto=format&fit=crop&w=400&q=80';
+      case 'jewelery':
+        return 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=400&q=80';
+      case "men's clothing":
+        return 'https://images.unsplash.com/photo-1490114538077-0a7f8cb49891?auto=format&fit=crop&w=400&q=80';
+      case "women's clothing":
+        return 'https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?auto=format&fit=crop&w=400&q=80';
+      default:
+        return 'https://images.unsplash.com/photo-1556906781-9a412961d289?auto=format&fit=crop&w=400&q=80';
+    }
+  }
+
+  // Fungsi Helper: Menerjemahkan nama kategori ke Bahasa Indonesia (Opsional)
+  String _translateCategory(String category) {
+    switch (category) {
+      case 'electronics': return 'Elektronik';
+      case 'jewelery': return 'Perhiasan';
+      case "men's clothing": return 'Pakaian Pria';
+      case "women's clothing": return 'Pakaian Wanita';
+      default: return category;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
+        centerTitle: true,
+        automaticallyImplyLeading: false,
         title: const Text(
-          'Kategori',
+          'Kategori Produk',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
-        centerTitle: true,
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: categories.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          return InkWell(
-            onTap: () {
-              // Aksi ketika kategori diklik
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF2F2F2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Icon(categories[index]['icon'], color: Colors.black54),
-                  const SizedBox(width: 16),
-                  Text(
-                    categories[index]['name'],
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+      // MENGGUNAKAN FUTURE BUILDER UNTUK DATA API
+      body: FutureBuilder<List<dynamic>>(
+        future: _categoriesFuture,
+        builder: (context, snapshot) {
+          // 1. Loading State
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: Colors.black));
+          }
+          // 2. Error State
+          else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          // 3. Empty State
+          else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('Tidak ada kategori ditemukan'));
+          }
+
+          // 4. Success State
+          final categories = snapshot.data!;
+
+          return GridView.builder(
+            padding: const EdgeInsets.all(16),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.1,
+            ),
+            itemCount: categories.length,
+            itemBuilder: (context, index) {
+              // API FakeStore mengembalikan List String: ["electronics", ...]
+              final String categoryName = categories[index];
+
+              return InkWell(
+                onTap: () {
+                  // TODO: Nanti di sini navigasi ke halaman List Produk per Kategori
+                  // Contoh: _apiService.getProductsByCategory(categoryName);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Membuka kategori: $categoryName')),
+                  );
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    image: DecorationImage(
+                      // Ambil gambar berdasarkan nama kategori
+                      image: NetworkImage(_getCategoryImage(categoryName)),
+                      fit: BoxFit.cover,
                     ),
                   ),
-                  const Spacer(),
-                  const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-                ],
-              ),
-            ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      // Overlay gelap
+                      color: Colors.black.withOpacity(0.4),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      // Tampilkan nama (diterjemahkan/asli)
+                      _translateCategory(categoryName).toUpperCase(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        letterSpacing: 1.0,
+                        shadows: [
+                          Shadow(blurRadius: 4, color: Colors.black, offset: Offset(0, 2))
+                        ]
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
           );
         },
       ),

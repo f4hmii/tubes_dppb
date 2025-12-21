@@ -1,19 +1,19 @@
 class Address {
-  final String label;
-  final String name;
-  final String province;
-  final String city;
-  final String district;
-  final String village;
-  final String fullAddress;
+  final String label;       // Rumah / Kantor
+  final String name;        // Nama Penerima
+  final String fullAddress; // Jalan, No Rumah
+  final String district;    // <-- INI YANG HILANG (Kecamatan)
+  final String city;        // Kota
+  final String province;    // Provinsi
+  final String postalCode;  // Kode Pos
 
   Address({
     required this.label,
     required this.name,
-    required this.province,
-    required this.city,
-    required this.district,
-    required this.village,
     required this.fullAddress,
+    required this.district,   // <-- WAJIB ADA
+    required this.city,
+    required this.province,
+    required this.postalCode,
   });
 }

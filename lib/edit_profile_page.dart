@@ -8,13 +8,13 @@ class EditProfilePage extends StatefulWidget {
   final Function(String, String, String, String) onSave;
 
   const EditProfilePage({
-    Key? key,
+    super.key,
     required this.initialName,
     required this.initialEmail,
     required this.initialPhone,
     required this.initialGender,
     required this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   State<EditProfilePage> createState() => _EditProfilePageState();
