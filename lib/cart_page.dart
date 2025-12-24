@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:movr/services/api_service.dart'; // Import API Service
+import 'package:flutter/foundation.dart'; // [WAJIB] Untuk kIsWeb
+import 'package:movr/models/cart_model.dart'; 
+import 'package:movr/services/cart_service.dart'; 
 import 'checkout_page.dart';
 
 class CartPage extends StatefulWidget {
@@ -10,10 +12,9 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
-  final ApiService _apiService = ApiService();
+  final CartService _cartService = CartService();
   
-  // Data Keranjang (Dinamis)
-  List<Map<String, dynamic>> _cartItems = [];
+  List<CartItem> _cartItems = [];
   bool _isLoading = true;
 
   @override
@@ -22,85 +23,126 @@ class _CartPageState extends State<CartPage> {
     _fetchCartData();
   }
 
-  // FUNGSI UTAMA: Mengambil Cart + Detail Produk
+  // --- FUNGSI HELPER URL GAMBAR (VERSI FINAL - WAJIB IMAGE-PROXY) ---
+  String _getCorrectImageUrl(String? imagePath) {
+    // 1. Cek Null
+    if (imagePath == null || imagePath.isEmpty) {
+      return "https://via.placeholder.com/150"; 
+    }
+
+    // 2. Base URL
+    // Kita pakai 127.0.0.1 karena Home Page Anda sukses pakai IP ini
+    String baseUrl = kIsWeb ? "http://127.0.0.1:8000" : "http://10.0.2.2:8000";
+
+    // 3. PROSES PEMBERSIHAN PATH
+    String cleanPath = imagePath;
+
+    // A. Jika input sudah berupa URL lengkap (misal: http://127.0.0.1:8000/storage/...)
+    // Kita harus bongkar URL-nya dan ambil path belakangnya saja.
+    if (cleanPath.startsWith('http')) {
+      try {
+        Uri uri = Uri.parse(cleanPath);
+        cleanPath = uri.path; // Hasilnya jadi: "/storage/products/namafile.png"
+      } catch (e) {
+        // Jika gagal parse, biarkan cleanPath apa adanya
+      }
+    }
+
+    // B. Hapus karakter '/' di depan
+    if (cleanPath.startsWith('/')) {
+      cleanPath = cleanPath.substring(1);
+    }
+
+    // C. Hapus folder-folder awalan yang salah/dobel
+    // Urutan replace ini PENTING.
+    
+    // Hapus 'image-proxy/' jika sudah ada (supaya tidak dobel nanti)
+    if (cleanPath.startsWith('image-proxy/')) {
+      cleanPath = cleanPath.replaceFirst('image-proxy/', '');
+    }
+    
+    // Hapus 'storage/' (INI PENYEBAB UTAMA ERROR ANDA)
+    if (cleanPath.startsWith('storage/')) {
+      cleanPath = cleanPath.replaceFirst('storage/', '');
+    }
+    
+    // Hapus 'public/'
+    if (cleanPath.startsWith('public/')) {
+      cleanPath = cleanPath.replaceFirst('public/', '');
+    }
+
+    // 4. HASIL AKHIR: PAKSA PAKAI /image-proxy/
+    // Format: http://127.0.0.1:8000/image-proxy/products/namafile.png
+    return "$baseUrl/image-proxy/$cleanPath";
+  }
+  // ------------------------------------------------------------------
+
   Future<void> _fetchCartData() async {
     try {
-      // 1. Ambil Data Cart dari API (User ID 1 sebagai simulasi)
-      final carts = await _apiService.getUserCart(1);
+      final result = await _cartService.getCart();
+      List<dynamic> listData = result['items'] ?? []; 
       
-      if (carts.isEmpty) {
-        setState(() => _isLoading = false);
-        return;
-      }
-
-      // Ambil keranjang pertama yang aktif
-      final List<dynamic> productsInCart = carts[0]['products'];
-
-      // 2. Siapkan wadah untuk data lengkap
-      List<Map<String, dynamic>> detailedItems = [];
-
-      // 3. LOOPING: Ambil detail (Nama, Gambar, Harga) untuk setiap produk
-      // Kita pakai Future.wait agar request berjalan paralel (lebih cepat)
-      final futures = productsInCart.map((item) async {
-        final productDetail = await _apiService.getProductDetail(item['productId']);
-        
-        // Konversi Harga USD ke IDR (x 15.000) agar terlihat realistis
-        int priceIDR = ((productDetail['price'] as num) * 15000).toInt();
-
-        return {
-          'id': productDetail['id'],
-          'name': productDetail['title'],
-          'price': priceIDR, 
-          'image': productDetail['image'],
-          'quantity': item['quantity'],
-          'size': 'All Size', // Data dummy karena API tidak punya size
-        };
-      });
-
-      // Tunggu semua data selesai diambil
-      detailedItems = await Future.wait(futures);
-
-      // 4. Update UI
       if (mounted) {
         setState(() {
-          _cartItems = detailedItems;
+          _cartItems = listData.map((e) => CartItem.fromJson(e)).toList();
           _isLoading = false;
         });
       }
-
     } catch (e) {
       print("Error fetching cart: $e");
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
-  // Hitung Total Harga
-  int get _totalPrice {
-    int total = 0;
+  double get _totalPrice {
+    double total = 0;
     for (var item in _cartItems) {
-      total += (item['price'] as int) * (item['quantity'] as int);
+      total += item.price * item.quantity;
     }
     return total;
   }
 
-  String _toIDR(int amount) {
-    return 'Rp ${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
+  String _toIDR(double amount) {
+    return 'Rp ${amount.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
   }
 
-  void _incrementQty(int index) {
+  Future<void> _updateQty(int index, int newQty) async {
+    final item = _cartItems[index];
+
+    // Optimistic Update
     setState(() {
-      _cartItems[index]['quantity']++;
+       // UI update logic here if needed
     });
+
+    try {
+      await _cartService.updateCartItem(item.id, newQty); 
+      _fetchCartData(); 
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(content: Text('Gagal update: $e')),
+      );
+    }
   }
 
-  void _decrementQty(int index) {
-    setState(() {
-      if (_cartItems[index]['quantity'] > 1) {
-        _cartItems[index]['quantity']--;
-      } else {
+  Future<void> _deleteItem(int index) async {
+    final item = _cartItems[index];
+    try {
+      await _cartService.deleteCartItem(item.id);
+      
+      setState(() {
         _cartItems.removeAt(index);
-      }
-    });
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+         const SnackBar(content: Text('Produk dihapus')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(content: Text('Gagal menghapus: $e')),
+      );
+    }
   }
 
   @override
@@ -117,7 +159,6 @@ class _CartPageState extends State<CartPage> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      // TAMPILAN LOADING ATAU LIST DATA
       body: _isLoading 
           ? const Center(child: CircularProgressIndicator(color: Colors.black))
           : _cartItems.isEmpty
@@ -131,36 +172,49 @@ class _CartPageState extends State<CartPage> {
                         itemCount: _cartItems.length,
                         separatorBuilder: (ctx, i) => const Divider(height: 30),
                         itemBuilder: (context, index) {
-                          final item = _cartItems[index];
+                          final item = _cartItems[index]; 
+                          
                           return Row(
                             children: [
-                              // Gambar
+                              // --- GAMBAR PRODUK ---
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
                                 child: Image.network(
-                                  item['image'],
-                                  width: 80, height: 80, fit: BoxFit.contain,
-                                  errorBuilder: (c,e,s) => Container(width: 80, height: 80, color: Colors.grey[200], child: const Icon(Icons.error)),
+                                  // Panggil Helper
+                                  _getCorrectImageUrl(item.product.image), 
+                                  
+                                  width: 80, height: 80, fit: BoxFit.cover,
+                                  
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      width: 80, height: 80, 
+                                      color: Colors.grey[200], 
+                                      child: const Icon(Icons.broken_image, color: Colors.grey)
+                                    );
+                                  },
                                 ),
                               ),
+                              // ---------------------
                               const SizedBox(width: 12),
+                              
                               // Info
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      item['name'], 
+                                      item.product.name, 
                                       style: const TextStyle(fontWeight: FontWeight.bold), 
                                       maxLines: 1, overflow: TextOverflow.ellipsis
                                     ),
                                     const SizedBox(height: 4),
-                                    Text(_toIDR(item['price']), style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.w600)),
+                                    Text(_toIDR(item.price), style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.w600)),
                                     const SizedBox(height: 4),
-                                    Text('Size: ${item['size']}', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                                    Text('Stok tersedia', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
                                   ],
                                 ),
                               ),
+                              
                               // Counter Qty
                               Container(
                                 decoration: BoxDecoration(
@@ -170,19 +224,31 @@ class _CartPageState extends State<CartPage> {
                                 child: Row(
                                   children: [
                                     InkWell(
-                                      onTap: () => _decrementQty(index),
+                                      onTap: () {
+                                        if (item.quantity > 1) {
+                                          _updateQty(index, item.quantity - 1);
+                                        } else {
+                                          _deleteItem(index);
+                                        }
+                                      },
                                       child: const Padding(padding: EdgeInsets.all(4), child: Icon(Icons.remove, size: 16)),
                                     ),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 8),
-                                      child: Text('${item['quantity']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                      child: Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.bold)),
                                     ),
                                     InkWell(
-                                      onTap: () => _incrementQty(index),
+                                      onTap: () => _updateQty(index, item.quantity + 1),
                                       child: const Padding(padding: EdgeInsets.all(4), child: Icon(Icons.add, size: 16)),
                                     ),
                                   ],
                                 ),
+                              ),
+                              
+                              // Tombol Hapus
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                onPressed: () => _deleteItem(index),
                               )
                             ],
                           );
@@ -220,12 +286,12 @@ class _CartPageState extends State<CartPage> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => CheckoutPage(
-                                        // Kirim Gabungan Data Keranjang ke Checkout
-                                        productName: "Order Keranjang (${_cartItems.length} Item)",
-                                        productPrice: _totalPrice,
+                                        productName: "Order (${_cartItems.length} Item)",
+                                        productPrice: _totalPrice.toInt(),
+                                        // PENTING: Gunakan helper di sini juga!
                                         imageUrl: _cartItems.isNotEmpty 
-                                            ? _cartItems[0]['image'] 
-                                            : 'https://via.placeholder.com/150',
+                                            ? _getCorrectImageUrl(_cartItems[0].product.image) 
+                                            : '',
                                       ),
                                     ),
                                   );

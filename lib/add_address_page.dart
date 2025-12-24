@@ -174,7 +174,7 @@ class _AddAddressPageState extends State<AddAddressPage> {
                       province: provinceController.text,
                       city: cityController.text,
                       district: districtController.text,
-                      postalCode: postalCodeController.text, // Data Kode Pos
+                      postalCode: postalCodeController.text, 
                       fullAddress: addressController.text,
                     );
 

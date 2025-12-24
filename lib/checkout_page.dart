@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // Wajib import ini agar format Rupiah konsisten
 
 class CheckoutPage extends StatefulWidget {
-  // 1. DATA YANG DITERIMA DARI HALAMAN SEBELUMNYA
+  // Kita tetap terima primitive types (String/Int) disini agar fleksibel
+  // (Bisa dipanggil dari DetailProduk atau Keranjang nanti)
   final String productName;
   final String imageUrl;
-  final int productPrice; // Harga dalam bentuk angka (untuk hitung total)
+  final int productPrice; 
 
   const CheckoutPage({
     super.key,
@@ -18,7 +20,8 @@ class CheckoutPage extends StatefulWidget {
 }
 
 class _CheckoutPageState extends State<CheckoutPage> {
-  int _selectedPayment = 0;
+  // ignore: unused_field
+  final int _selectedPayment = 0;
   bool _useInsurance = false;
   bool _useCoins = false;
 
@@ -28,18 +31,24 @@ class _CheckoutPageState extends State<CheckoutPage> {
   final int _appFee = 1000;
   final int _coinBalance = 15000;
 
-  // 2. HITUNG TOTAL (Menggunakan harga asli produk yang dikirim)
+  // 2. HITUNG TOTAL 
   int get _totalPayment {
     int total = widget.productPrice + _shippingPrice + _appFee;
+    
     if (_useInsurance) total += _insuranceFee;
     if (_useCoins) total -= _coinBalance;
-    return total;
+    
+    // PROTEKSI: Jangan sampai total bayar minus (kalau diskon kegedean)
+    return total < 0 ? 0 : total;
   }
 
-  // Format Rupiah
-  String _toIDR(int amount) {
-    if (amount < 0) return '-Rp ${(-amount).toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
-    return 'Rp ${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
+  // REFACTOR: Gunakan Library intl agar sama dengan halaman Home
+  String _formatRupiah(int amount) {
+    return NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    ).format(amount);
   }
 
   @override
@@ -69,7 +78,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   Text('Jl. Telekomunikasi No. 1, Bandung, Jawa Barat', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
                   const Divider(height: 30),
 
-                  // PRODUK (TAMPILKAN DATA YANG DIKIRIM)
+                  // PRODUK 
                   _sectionTitle('Rincian Produk', Icons.shopping_bag_outlined),
                   const SizedBox(height: 12),
                   Row(
@@ -77,7 +86,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
-                          widget.imageUrl, // GAMBAR DINAMIS
+                          widget.imageUrl, 
                           width: 70, height: 70, fit: BoxFit.contain,
                           errorBuilder: (ctx, error, stack) => Container(color: Colors.grey[200], width: 70, height: 70, child: const Icon(Icons.error)),
                         ),
@@ -88,7 +97,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              widget.productName, // NAMA DINAMIS
+                              widget.productName, 
                               maxLines: 2, overflow: TextOverflow.ellipsis, 
                               style: const TextStyle(fontWeight: FontWeight.w600)
                             ),
@@ -98,7 +107,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(_toIDR(widget.productPrice), style: const TextStyle(fontWeight: FontWeight.bold)), // HARGA DINAMIS
+                                Text(_formatRupiah(widget.productPrice), style: const TextStyle(fontWeight: FontWeight.bold)), 
                                 const Text('x1', style: TextStyle(fontSize: 12)),
                               ],
                             ),
@@ -107,6 +116,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       ),
                     ],
                   ),
+                  const Divider(height: 30),
+
+                  // OPSI TAMBAHAN (Interaktif)
+                  _buildSwitchOption("Asuransi Pengiriman", _insuranceFee, _useInsurance, (val) {
+                    setState(() => _useInsurance = val);
+                  }),
+                  _buildSwitchOption("Tukar Koin MOVR", -_coinBalance, _useCoins, (val) {
+                    setState(() => _useCoins = val);
+                  }, isDiscount: true),
+
                   const Divider(height: 30),
 
                   // RINGKASAN BIAYA
@@ -138,12 +157,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Text('Total Pembayaran', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      Text(_toIDR(_totalPayment), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red)),
+                      Text(_formatRupiah(_totalPayment), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red)),
                     ],
                   ),
                   ElevatedButton(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Pesanan Berhasil Dibuat!")));
+                      // Di sini nanti logika kirim data ke API Laravel (POST Order)
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
@@ -163,11 +183,38 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   Widget _sectionTitle(String title, IconData icon) => Row(children: [Icon(icon, size: 18), const SizedBox(width: 8), Text(title, style: const TextStyle(fontWeight: FontWeight.bold))]);
   
+  // Widget Switch untuk Asuransi & Koin
+  Widget _buildSwitchOption(String title, int amount, bool value, Function(bool) onChanged, {bool isDiscount = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: const TextStyle(fontSize: 14)),
+            Text(
+               isDiscount ? "-${_formatRupiah(amount.abs())}" : _formatRupiah(amount), 
+               style: TextStyle(fontSize: 12, color: Colors.grey[600])
+            ),
+          ],
+        ),
+        Switch(
+          value: value, 
+          onChanged: onChanged,
+          activeColor: Colors.black,
+        )
+      ],
+    );
+  }
+
   Widget _summaryRow(String title, int amount, {bool isDiscount = false}) => Padding(
     padding: const EdgeInsets.only(bottom: 6),
     child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
       Text(title, style: TextStyle(color: Colors.grey[700], fontSize: 13)),
-      Text(_toIDR(amount), style: TextStyle(fontWeight: FontWeight.w500, color: isDiscount ? Colors.green : Colors.black, fontSize: 13)),
+      Text(
+        _formatRupiah(amount), 
+        style: TextStyle(fontWeight: FontWeight.w500, color: isDiscount ? Colors.green : Colors.black, fontSize: 13)
+      ),
     ]),
   );
 }

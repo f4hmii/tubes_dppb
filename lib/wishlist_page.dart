@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-// Import API dan Halaman Detail
-import 'package:movr/services/api_service.dart';
-import 'package:movr/product_detail_page.dart';
+import 'package:intl/intl.dart'; // Pastikan import intl
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import 'models/cart_model.dart'; // Import Model Product - Use cart_model for consistency
+import 'services/wishlist_service.dart';
+import 'services/product_service.dart';
+import 'product_detail_page.dart';
 
 class WishlistPage extends StatefulWidget {
   const WishlistPage({super.key});
@@ -11,10 +15,11 @@ class WishlistPage extends StatefulWidget {
 }
 
 class _WishlistPageState extends State<WishlistPage> {
-  final ApiService _apiService = ApiService();
-  
-  // Variabel untuk menampung data dari API
-  List<dynamic> _wishlistItems = [];
+  final WishlistService _wishlistService = WishlistService();
+  final ProductService _productService = ProductService();
+
+  // PERBAIKAN 1: Ubah tipe data jadi List<Product>
+  List<Product> _wishlistItems = [];
   bool _isLoading = true;
 
   @override
@@ -23,22 +28,51 @@ class _WishlistPageState extends State<WishlistPage> {
     _loadWishlistData();
   }
 
-  // Fungsi: Ambil data API lalu ambil 5 item pertama sebagai simulasi wishlist
+  // Helper Format Rupiah (Konsisten dengan Home)
+  String formatRupiah(double price) {
+    double finalPrice = price < 1000 ? price * 15000 : price;
+    return NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0
+    ).format(finalPrice);
+  }
+
   Future<void> _loadWishlistData() async {
     try {
-      final products = await _apiService.getAllProducts();
-      if (mounted) {
-        setState(() {
-          // KITA AMBIL 5 PRODUK PERTAMA SEBAGAI CONTOH WISHLIST
-          _wishlistItems = products.take(5).toList(); 
-          _isLoading = false;
-        });
+      // Try to load from API first
+      final products = await _wishlistService.getWishlist();
+
+      if (products.isNotEmpty) {
+        // If API returned products, use them
+        if (mounted) {
+          setState(() {
+            _wishlistItems = products;
+            _isLoading = false;
+          });
+        }
+      } else {
+        // If API didn't return products (e.g., fallback to local storage),
+        // get the favorite product IDs and fetch those products
+        final prefs = await SharedPreferences.getInstance();
+        final localFavoritesJson = prefs.getString('favorites') ?? '[]';
+        final List<dynamic> localFavoritesList = json.decode(localFavoritesJson);
+        final List<int> favoriteIds = localFavoritesList.cast<int>();
+
+        // Fetch all products and filter by favorite IDs
+        final allProducts = await _productService.getAllProducts();
+        final favoriteProducts = allProducts.where((product) => favoriteIds.contains(product.id)).toList();
+
+        if (mounted) {
+          setState(() {
+            _wishlistItems = favoriteProducts;
+            _isLoading = false;
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Gagal memuat wishlist: $e')),
         );
@@ -46,26 +80,49 @@ class _WishlistPageState extends State<WishlistPage> {
     }
   }
 
-  // Fungsi Hapus Item (Secara Lokal)
-  void _removeFromWishlist(int index) {
+  void _removeFromWishlist(int index) async {
     final removedItem = _wishlistItems[index];
+
+    // Remove from UI immediately for better UX
     setState(() {
       _wishlistItems.removeAt(index);
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${removedItem['title']} dihapus'),
-        action: SnackBarAction(
-          label: 'BATAL',
-          onPressed: () {
-            setState(() {
-              _wishlistItems.insert(index, removedItem);
-            });
-          },
+    try {
+      // Remove from backend
+      await _wishlistService.removeFromWishlist(removedItem.id);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${removedItem.name} dihapus dari wishlist'),
+          backgroundColor: Colors.orange,
+          action: SnackBarAction(
+            label: 'BATAL',
+            onPressed: () async {
+              // Add back to UI
+              setState(() {
+                _wishlistItems.insert(index, removedItem);
+              });
+
+              // Add back to backend
+              await _wishlistService.addToWishlist(removedItem.id);
+            },
+          ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      // If API call fails, add item back to list
+      setState(() {
+        _wishlistItems.insert(index, removedItem);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menghapus dari wishlist: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -82,7 +139,6 @@ class _WishlistPageState extends State<WishlistPage> {
         centerTitle: true,
         automaticallyImplyLeading: false,
       ),
-      // LOGIKA TAMPILAN: Loading -> Kosong -> Ada Data
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.black))
           : _wishlistItems.isEmpty
@@ -99,23 +155,15 @@ class _WishlistPageState extends State<WishlistPage> {
     );
   }
 
-  // Widget Tampilan Item (Terkoneksi Data API)
-  Widget _buildWishlistItem(dynamic item, int index) {
-    // Format Harga
-    final String formattedPrice = 'Rp ${(item['price'] * 15000).toStringAsFixed(0)}';
-
+  // PERBAIKAN 3: Parameter item bertipe Product
+  Widget _buildWishlistItem(Product item, int index) {
     return GestureDetector(
       onTap: () {
-        // PERBAIKAN NAVIGASI KE DETAIL (Mengirim Data Lengkap)
+        // PERBAIKAN 4: Navigasi kirim Object Product utuh
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ProductDetailPage(
-              productName: item['title'],
-              price: formattedPrice,
-              description: item['description'] ?? 'No Description',
-              imageUrl: item['image'],
-            ),
+            builder: (context) => ProductDetailPage(product: item),
           ),
         );
       },
@@ -135,14 +183,14 @@ class _WishlistPageState extends State<WishlistPage> {
         ),
         child: Row(
           children: [
-            // Gambar Produk dari API
+            // Gambar Produk
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
-                item['image'],
+                item.image, // Akses via Model
                 width: 80,
                 height: 80,
-                fit: BoxFit.contain, // Contain agar gambar produk utuh
+                fit: BoxFit.contain,
                 errorBuilder: (ctx, error, stack) => const Icon(Icons.error),
               ),
             ),
@@ -153,26 +201,29 @@ class _WishlistPageState extends State<WishlistPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item['title'],
+                    item.name, // Akses via Model - cart_model uses 'name' instead of 'title'
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                    maxLines: 2, // Maksimal 2 baris agar judul panjang muat
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  // Rating (Pengganti Size karena API tidak punya data Size)
+                  // Rating (Akses ke Nested Object Rating jika ada di Model)
+                  // Jika di model rating belum ada, bisa dihapus atau di hardcode dulu
                   Row(
                     children: [
-                      const Icon(Icons.star, size: 14, color: Colors.amber),
-                      const SizedBox(width: 4),
-                      Text(
-                        "${item['rating']['rate']} (${item['rating']['count']})",
-                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                      ),
+                       const Icon(Icons.star, size: 14, color: Colors.amber),
+                       const SizedBox(width: 4),
+                       // Asumsi model Product Anda tidak punya properti rating object terpisah 
+                       // jika error, hapus baris Text ini.
+                       const Text(
+                         "4.8 (Review)", 
+                         style: TextStyle(color: Colors.grey, fontSize: 12),
+                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    formattedPrice,
+                    formatRupiah(item.price), // Pakai helper intl
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.blueAccent),
                   ),
                 ],

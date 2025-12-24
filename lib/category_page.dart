@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'services/api_service.dart'; // Sesuaikan path import ini
+import 'services/product_service.dart';
 
 class CategoryPage extends StatefulWidget {
   const CategoryPage({super.key});
@@ -9,14 +9,14 @@ class CategoryPage extends StatefulWidget {
 }
 
 class _CategoryPageState extends State<CategoryPage> {
-  final ApiService _apiService = ApiService();
-  late Future<List<dynamic>> _categoriesFuture;
+  final ProductService _productService = ProductService();
+  late Future<List<String>> _categoriesFuture;
 
   @override
   void initState() {
     super.initState();
     // Panggil API: https://fakestoreapi.com/products/categories
-    _categoriesFuture = _apiService.getAllCategories();
+    _categoriesFuture = _productService.getAllCategories();
   }
 
   // Fungsi Helper: Memberikan gambar berdasarkan nama kategori dari API
@@ -61,7 +61,7 @@ class _CategoryPageState extends State<CategoryPage> {
         ),
       ),
       // MENGGUNAKAN FUTURE BUILDER UNTUK DATA API
-      body: FutureBuilder<List<dynamic>>(
+      body: FutureBuilder<List<String>>(
         future: _categoriesFuture,
         builder: (context, snapshot) {
           // 1. Loading State
@@ -70,7 +70,16 @@ class _CategoryPageState extends State<CategoryPage> {
           }
           // 2. Error State
           else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Error: ${snapshot.error}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            );
           }
           // 3. Empty State
           else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -80,55 +89,54 @@ class _CategoryPageState extends State<CategoryPage> {
           // 4. Success State
           final categories = snapshot.data!;
 
-          return GridView.builder(
+          return ListView.builder(
             padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 1.1,
-            ),
             itemCount: categories.length,
             itemBuilder: (context, index) {
-              // API FakeStore mengembalikan List String: ["electronics", ...]
+              // API mengembalikan List String: nama kategori
               final String categoryName = categories[index];
 
-              return InkWell(
-                onTap: () {
-                  // TODO: Nanti di sini navigasi ke halaman List Produk per Kategori
-                  // Contoh: _apiService.getProductsByCategory(categoryName);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Membuka kategori: $categoryName')),
-                  );
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    image: DecorationImage(
-                      // Ambil gambar berdasarkan nama kategori
-                      image: NetworkImage(_getCategoryImage(categoryName)),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: InkWell(
+                  onTap: () {
+                    // TODO: Nanti di sini navigasi ke halaman List Produk per Kategori
+                    // Contoh: _apiService.getProductsByCategory(categoryName);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Membuka kategori: $categoryName')),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(12),
                   child: Container(
+                    height: 80,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
-                      // Overlay gelap
-                      color: Colors.black.withOpacity(0.4),
+                      image: DecorationImage(
+                        // Ambil gambar berdasarkan nama kategori
+                        image: NetworkImage(_getCategoryImage(categoryName)),
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      // Tampilkan nama (diterjemahkan/asli)
-                      _translateCategory(categoryName).toUpperCase(),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                        letterSpacing: 1.0,
-                        shadows: [
-                          Shadow(blurRadius: 4, color: Colors.black, offset: Offset(0, 2))
-                        ]
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        // Overlay gelap
+                        color: Colors.black.withOpacity(0.4),
+                      ),
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: Text(
+                        // Tampilkan nama (diterjemahkan/asli)
+                        _translateCategory(categoryName).toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                          letterSpacing: 1.0,
+                          shadows: [
+                            Shadow(blurRadius: 4, color: Colors.black, offset: Offset(0, 2))
+                          ]
+                        ),
                       ),
                     ),
                   ),

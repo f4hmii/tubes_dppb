@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
-import 'services/api_service.dart';
+import 'package:intl/intl.dart';
+// PENTING: Gunakan cart_model.dart, jangan impor product_model.dart
+import '../models/cart_model.dart';
+import '../services/product_service.dart';
+import '../services/cart_service.dart';
+import '../services/wishlist_service.dart';
 import 'product_card.dart';
 import 'product_detail_page.dart';
 
@@ -11,14 +16,117 @@ class HomeContent extends StatefulWidget {
 }
 
 class _HomeContentState extends State<HomeContent> {
-  final ApiService _apiService = ApiService(); // Panggil Service
-  late Future<List<dynamic>> _productsFuture;
+  final ProductService _productService = ProductService();
+  final CartService _cartService = CartService();
+  final WishlistService _wishlistService = WishlistService();
+
+  // Pastikan tipe data List<Product> berasal dari cart_model.dart
+  late Future<List<Product>> _productsFuture;
+
+  // Keep track of favorite status for each product
+  final Map<int, bool> _favoriteStatus = {};
 
   @override
   void initState() {
     super.initState();
-    // Panggil HTTP Request ke-1 saat aplikasi dibuka
-    _productsFuture = _apiService.getAllProducts();
+    // Memanggil API produk
+    _productsFuture = _loadProductsAndFavorites();
+  }
+
+  // Load products and check their favorite status
+  Future<List<Product>> _loadProductsAndFavorites() async {
+    final products = await _productService.getAllProducts();
+
+    // Check favorite status for each product
+    for (final product in products) {
+      _favoriteStatus[product.id] = await _wishlistService.isInWishlist(product.id);
+    }
+
+    return products;
+  }
+
+  // Fungsi untuk menangani penambahan ke keranjang
+  Future<void> _handleAddToCart(Product product) async {
+    try {
+      // Mengirim ID produk ke backend Laravel
+      await _cartService.addToCart(product.id, 1);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${product.name} berhasil ditambah ke keranjang'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menambah ke keranjang: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // Fungsi untuk menangani penambahan ke wishlist
+  Future<void> _handleAddToWishlist(Product product) async {
+    try {
+      await _wishlistService.addToWishlist(product.id);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${product.name} ditambahkan ke wishlist'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menambah ke wishlist: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // Fungsi untuk menangani penghapusan dari wishlist
+  Future<void> _handleRemoveFromWishlist(Product product) async {
+    try {
+      await _wishlistService.removeFromWishlist(product.id);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${product.name} dihapus dari wishlist'),
+          backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menghapus dari wishlist: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  String formatRupiah(double price) {
+    // Logika penyesuaian harga jika data berasal dari API dummy
+    double finalPrice = price < 1000 ? price * 15000 : price;
+    
+    return NumberFormat.currency(
+      locale: 'id_ID', 
+      symbol: 'Rp ', 
+      decimalDigits: 0
+    ).format(finalPrice);
   }
 
   @override
@@ -32,27 +140,33 @@ class _HomeContentState extends State<HomeContent> {
           _buildCategorySection(),
           const SizedBox(height: 30),
           _buildProductHeader(),
-          
-          // GANTI GRIDVIEW DENGAN FUTURE BUILDER (HTTP)
-          FutureBuilder<List<dynamic>>(
+
+          FutureBuilder<List<Product>>(
             future: _productsFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator()); // Loading
+                return const SizedBox(
+                  height: 200, 
+                  child: Center(child: CircularProgressIndicator(color: Colors.black))
+                );
               } else if (snapshot.hasError) {
-                return Center(child: Text("Error: ${snapshot.error}"));
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text("Gagal memuat data: ${snapshot.error}"),
+                  ),
+                );
               } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(child: Text("Tidak ada produk"));
+                return const Center(child: Text("Tidak ada produk tersedia"));
               }
 
-              // Jika data ada
               final products = snapshot.data!;
-              
+
               return GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: products.length > 6 ? 6 : products.length, // Tampilkan 6 saja biar rapi
+                itemCount: products.length > 6 ? 6 : products.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   crossAxisSpacing: 10,
@@ -61,33 +175,37 @@ class _HomeContentState extends State<HomeContent> {
                 ),
                 itemBuilder: (context, index) {
                   final product = products[index];
-                  
-                  // --- PERBAIKAN LOGIKA HARGA (SAFE PARSING) ---
-                  // Kita pastikan harga diubah ke angka (num) dulu, baru dikali
-                  // Jika error/null, anggap harganya 0
-                  num hargaAngka = num.tryParse(product['price'].toString()) ?? 0;
-                  final formattedPrice = 'Rp ${(hargaAngka * 15000).toStringAsFixed(0)}';
-                  // ---------------------------------------------
 
                   return ProductCard(
-                    imageUrl: product['image'], 
-                    title: product['title'],
-                    price: formattedPrice, 
-                    onFavoritePressed: () {},
-                    onCheckoutPressed: () {
-                       Navigator.push(
-                         context, 
-                         MaterialPageRoute(
-                           builder: (_) => ProductDetailPage(
-                             productName: product['title'],
-                             price: formattedPrice,
-                             description: product['description'] ?? 'Tidak ada deskripsi',
-                             imageUrl: product['image'],
-                           )
-                         )
-                       );
+                    product: product,
+                    imageUrl: product.image,
+                    title: product.name,
+                    price: formatRupiah(product.price),
+                    isFavorite: _favoriteStatus[product.id] ?? false, // Use actual favorite status
+                    onFavoritePressed: (isFavorite) {
+                      // Update local favorite status
+                      setState(() {
+                        _favoriteStatus[product.id] = isFavorite;
+                      });
+
+                      // Call the appropriate service method
+                      if (isFavorite) {
+                        // Add to wishlist
+                        _handleAddToWishlist(product);
+                      } else {
+                        // Remove from wishlist
+                        _handleRemoveFromWishlist(product);
+                      }
                     },
-                    onCartPressed: () {},
+                    onCartPressed: () => _handleAddToCart(product),
+                    onCheckoutPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ProductDetailPage(product: product),
+                        ),
+                      );
+                    },
                   );
                 },
               );
@@ -99,8 +217,8 @@ class _HomeContentState extends State<HomeContent> {
     );
   }
 
-  // --- BAGIAN BANNER & KATEGORI TETAP SAMA (DUMMY SPORTY) ---
-  
+  // --- WIDGET HELPER ---
+
   Widget _buildBannerSection() {
     return SizedBox(
       height: 220,
@@ -111,6 +229,7 @@ class _HomeContentState extends State<HomeContent> {
           Image.network(
             'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=800&q=80', 
             fit: BoxFit.cover,
+            errorBuilder: (c,e,s) => Container(color: Colors.grey),
           ),
           Container(
             decoration: BoxDecoration(
@@ -127,7 +246,7 @@ class _HomeContentState extends State<HomeContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   "JUST DO IT",
                   style: TextStyle(
                     color: Colors.white, 
@@ -137,7 +256,7 @@ class _HomeContentState extends State<HomeContent> {
                     letterSpacing: 1.2
                   ),
                 ),
-                Text(
+                const Text(
                   "Perlengkapan olahraga profesional",
                   style: TextStyle(color: Colors.white, fontSize: 12),
                 ),
@@ -183,8 +302,7 @@ class _HomeContentState extends State<HomeContent> {
     return Column(
       children: [
         Container(
-          width: 55, 
-          height: 55,
+          width: 55, height: 55,
           decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
           child: Icon(icon, color: Colors.black87, size: 24),
         ),

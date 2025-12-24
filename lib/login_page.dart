@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:movr/services/api_service.dart';
-// IMPORT PENTING: Gunakan HomePage (Induk) bukan HomeContent
-import 'package:movr/home_page.dart'; 
+import 'package:movr/services/auth_service.dart';
+import 'package:movr/home_page.dart';
+import 'package:shared_preferences/shared_preferences.dart'; 
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -11,21 +11,18 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final ApiService _apiService = ApiService();
-  
-  // Controller input
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  
-  bool _isLoading = false;
-  bool _isObscure = true; // Sembunyikan password
+  final AuthService _authService = AuthService();
 
-  // FUNGSI LOGIN UTAMA
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  bool _isLoading = false;
+  bool _isObscure = true;
+
   Future<void> _handleLogin() async {
-    // 1. Validasi Input Kosong
-    if (_usernameController.text.isEmpty || _passwordController.text.isEmpty) {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Username dan Password harus diisi!')),
+        const SnackBar(content: Text('Email dan Password harus diisi!')),
       );
       return;
     }
@@ -33,34 +30,53 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      // 2. Panggil API Login
-      final response = await _apiService.login(
-        _usernameController.text, 
+      final response = await _authService.login(
+        _emailController.text, 
         _passwordController.text
       );
 
-      // 3. Cek Token (Tanda Sukses)
-      if (response.containsKey('token')) {
-        if (!mounted) return;
+      // PERBAIKAN UTAMA: Sinkronisasi Key Token
+      if (response.containsKey('access_token')) {
         
+        final prefs = await SharedPreferences.getInstance();
+        
+        // Simpan dengan key 'access_token' agar ProfileService bisa membacanya
+        await prefs.setString('access_token', response['access_token']);
+        
+        // Simpan data user (Struktur Laravel: response['user']['name'])
+        if (response.containsKey('user')) {
+           await prefs.setString('userName', response['user']['name'] ?? '');
+           await prefs.setString('userRole', response['user']['role'] ?? 'pembeli');
+        }
+
+        if (!mounted) return;
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login Berhasil!'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Login Berhasil!'), 
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 1),
+          ),
         );
 
-        // 4. NAVIGASI BENAR: Ke HomePage (Halaman Induk dengan Menu Bawah)
+        // Beri jeda sedikit agar SnackBar terlihat sebelum pindah halaman
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
-          // PERBAIKAN: Hapus 'const' jika ada, dan arahkan ke HomePage()
-          MaterialPageRoute(builder: (context) => const HomePage()), 
+          MaterialPageRoute(builder: (context) => const HomePage()),
         );
       } else {
-        throw Exception('Token tidak ditemukan');
+        throw Exception('Token tidak ditemukan dalam respon server');
       }
 
     } catch (e) {
       if (!mounted) return;
+      final message = e.toString().replaceAll('Exception: ', '');
+      
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login Gagal: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text(message), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -69,11 +85,12 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
+  // --- UI TETAP SAMA NAMUN DENGAN PERBAIKAN LOGIKA ---
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -85,7 +102,6 @@ class _LoginPageState extends State<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 50),
-              // Logo
               const Center(
                 child: Icon(Icons.shopping_bag_outlined, size: 80, color: Colors.black),
               ),
@@ -105,22 +121,19 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 50),
 
-              // Input Username
-              const Text("Username", style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text("Email Address", style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               TextField(
-                controller: _usernameController,
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  hintText: 'Masukkan username',
-                  prefixIcon: const Icon(Icons.person_outline),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  hintText: 'Masukkan email anda',
+                  prefixIcon: const Icon(Icons.email_outlined),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               const SizedBox(height: 20),
 
-              // Input Password
               const Text("Password", style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               TextField(
@@ -131,20 +144,13 @@ class _LoginPageState extends State<LoginPage> {
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     icon: Icon(_isObscure ? Icons.visibility_off : Icons.visibility),
-                    onPressed: () {
-                      setState(() {
-                        _isObscure = !_isObscure;
-                      });
-                    },
+                    onPressed: () => setState(() => _isObscure = !_isObscure),
                   ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
 
               const SizedBox(height: 10),
-              // Lupa Password
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
@@ -155,7 +161,6 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 30),
 
-              // Tombol Login
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -163,12 +168,13 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: _isLoading ? null : _handleLogin,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? const SizedBox(
+                          height: 20, width: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                        )
                       : const Text(
                           'LOGIN',
                           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
@@ -178,7 +184,6 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 20),
               
-              // Link Daftar
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

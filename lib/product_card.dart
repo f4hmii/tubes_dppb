@@ -1,25 +1,40 @@
 import 'package:flutter/material.dart';
+import '../models/cart_model.dart';
 
-class ProductCard extends StatelessWidget {
+class ProductCard extends StatefulWidget {
   final String imageUrl;
   final String title;
   final String price;
+  final Product product; // Add product object to access its ID
   final bool isFavorite;
-  final VoidCallback onCheckoutPressed;
-  final VoidCallback onFavoritePressed;
+  final Function(bool) onFavoritePressed; // Change to function that takes boolean
   final VoidCallback onCartPressed;
+  final VoidCallback onCheckoutPressed;
 
-  // PERBAIKAN DI SINI:
   const ProductCard({
     super.key,
     required this.imageUrl,
     required this.title,
     required this.price,
+    required this.product,
     this.isFavorite = false,
+    required this.onFavoritePressed,
+    required this.onCartPressed,
     required this.onCheckoutPressed,
-    required this.onFavoritePressed, // Tambahkan ini
-    required this.onCartPressed,     // Tambahkan ini
   });
+
+  @override
+  State<ProductCard> createState() => _ProductCardState();
+}
+
+class _ProductCardState extends State<ProductCard> {
+  late bool _isFavorite;
+
+  @override
+  void initState() {
+    super.initState();
+    _isFavorite = widget.isFavorite;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +56,7 @@ class ProductCard extends StatelessWidget {
                 child: AspectRatio(
                   aspectRatio: 1,
                   child: Image.network(
-                    imageUrl,
+                    widget.imageUrl,
                     fit: BoxFit.cover,
                     ),
                   ),
@@ -51,7 +66,13 @@ class ProductCard extends StatelessWidget {
                 top: 6,
                 right: 6,
                 child: GestureDetector(
-                  onTap: onFavoritePressed,
+                  onTap: () async {
+                    setState(() {
+                      _isFavorite = !_isFavorite;
+                    });
+                    // Notify parent widget about the change
+                    widget.onFavoritePressed(_isFavorite);
+                  },
                   child: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
@@ -67,10 +88,10 @@ class ProductCard extends StatelessWidget {
                     ),
                     child: Icon(
                       // Ganti ikon berdasarkan status isFavorite
-                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                      _isFavorite ? Icons.favorite : Icons.favorite_border,
                       size: 18,
                       // Warna merah jika favorit, hitam jika tidak
-                      color: isFavorite ? Colors.red : Colors.black,
+                      color: _isFavorite ? Colors.red : Colors.black,
                     ),
                   ),
                 ),
@@ -86,7 +107,7 @@ class ProductCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  title,
+                  widget.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -96,7 +117,7 @@ class ProductCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  price,
+                  widget.price,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -113,7 +134,7 @@ class ProductCard extends StatelessWidget {
             children: [
               Expanded(
                 child: GestureDetector(
-                  onTap: onCartPressed,
+                  onTap: widget.onCartPressed,
                   child: Container(
                     height: 40,
                     decoration: BoxDecoration(
@@ -129,7 +150,7 @@ class ProductCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: GestureDetector(
-                  onTap: onCheckoutPressed,
+                  onTap: widget.onCheckoutPressed,
                   child: Container(
                     height: 40,
                     decoration: BoxDecoration(

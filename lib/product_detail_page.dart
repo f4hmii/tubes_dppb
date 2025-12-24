@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
-import 'checkout_page.dart'; 
+import 'package:intl/intl.dart'; // Pastikan sudah 'flutter pub add intl'
+import '../models/cart_model.dart'; // Import Model Product - Use cart_model for consistency
+import 'checkout_page.dart';
 import 'cart_page.dart';
 
 class ProductDetailPage extends StatefulWidget {
-  final String productName;
-  final String price;
-  final String description;
-  final String imageUrl;
+  // PERUBAHAN 1: Hapus parameter satuan string, ganti dengan Objek Product
+  final Product product;
 
   const ProductDetailPage({
     super.key,
-    required this.productName,
-    required this.price,
-    required this.description,
-    required this.imageUrl,
+    required this.product,
   });
 
   @override
@@ -22,8 +19,19 @@ class ProductDetailPage extends StatefulWidget {
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
   String _selectedSize = '';
-  int _quantity = 1;
+  // ignore: unused_field
+  final int _quantity = 1; 
   final List<String> _sizes = ['S', 'M', 'L', 'XL', 'XXL'];
+
+  // Helper untuk format rupiah (Sama seperti di Home)
+  String formatRupiah(double price) {
+    double finalPrice = price < 1000 ? price * 15000 : price;
+    return NumberFormat.currency(
+      locale: 'id_ID', 
+      symbol: 'Rp ', 
+      decimalDigits: 0
+    ).format(finalPrice);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +45,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Detail Produk', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
+        // PERUBAHAN 2: Menggunakan data dari Object Product
+        title: Text(widget.product.name, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
         actions: [
           IconButton(icon: const Icon(Icons.share_outlined, color: Colors.black), onPressed: () {}),
           Padding(
@@ -62,7 +71,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     height: 400,
                     width: double.infinity,
                     color: Colors.white,
-                    child: Image.network(widget.imageUrl, fit: BoxFit.contain, errorBuilder: (c,e,s) => const Icon(Icons.error)),
+                    child: Image.network(
+                      widget.product.image, // Akses via Model
+                      fit: BoxFit.contain, 
+                      errorBuilder: (c,e,s) => const Icon(Icons.error)
+                    ),
                   ),
 
                   // INFO PRODUK
@@ -72,13 +85,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(widget.price, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                        // Format Harga Rapi
+                        Text(
+                          formatRupiah(widget.product.price), 
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)
+                        ),
                         const SizedBox(height: 8),
-                        Text(widget.productName, style: const TextStyle(fontSize: 16, height: 1.3)),
+                        Text(widget.product.name, style: const TextStyle(fontSize: 16, height: 1.3)),
                         const SizedBox(height: 12),
-                        Row(children: [
-                          const Icon(Icons.star, color: Colors.amber, size: 18),
-                          const Text(' 4.8  |  1.2k Terjual', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                        const Row(children: [
+                          Icon(Icons.star, color: Colors.amber, size: 18),
+                          Text(' 4.8  |  1.2k Terjual', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
                         ]),
                       ],
                     ),
@@ -95,7 +112,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       children: [
                         const Text('Deskripsi', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
-                        Text(widget.description, style: TextStyle(color: Colors.grey[800], height: 1.5)),
+                        Text(widget.product.name, style: TextStyle(color: Colors.grey[800], height: 1.5)), // Using name as description since cart_model Product doesn't have description
                       ],
                     ),
                   ),
@@ -151,9 +168,14 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 children: [
                   // Info Produk di Modal
                   Row(children: [
-                    Image.network(widget.imageUrl, width: 80, height: 80, fit: BoxFit.cover),
+                    Image.network(widget.product.image, width: 80, height: 80, fit: BoxFit.cover),
                     const SizedBox(width: 12),
-                    Expanded(child: Text(widget.price, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
+                    Expanded(
+                      child: Text(
+                        formatRupiah(widget.product.price), // Pakai formatter lagi
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)
+                      )
+                    ),
                     IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context))
                   ]),
                   const Divider(),
@@ -173,7 +195,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   ),
                   const SizedBox(height: 20),
 
-                  // TOMBOL BELI SEKARANG (PERBAIKAN UTAMA DISINI)
+                  // PERBAIKAN LOGIKA TOMBOL BELI
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -181,23 +203,21 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       onPressed: (_selectedSize.isEmpty) ? null : () {
                         Navigator.pop(context); // Tutup Modal
 
-                        // 1. BERSIHKAN HARGA (Hapus "Rp" dan titik)
-                        int priceInt = 0;
-                        try {
-                           // Ubah "Rp 150.000" jadi 150000
-                           priceInt = int.parse(widget.price.replaceAll(RegExp(r'[^0-9]'), ''));
-                        } catch (e) {
-                           priceInt = 0;
-                        }
+                        // PERBAIKAN 3: Tidak perlu regex/parse string lagi!
+                        // Kita punya data asli double di widget.product.price
+                        // Hitung harga final (misal dikali 15000 jika data dari fakestore)
+                        double finalPriceDouble = widget.product.price < 1000 
+                            ? widget.product.price * 15000 
+                            : widget.product.price;
 
-                        // 2. NAVIGASI KE CHECKOUT BAWA DATA
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => CheckoutPage(
-                              productName: widget.productName,
-                              imageUrl: widget.imageUrl,
-                              productPrice: priceInt,
+                              productName: widget.product.name,
+                              imageUrl: widget.product.image,
+                              // Kirim sebagai INT bersih ke checkout
+                              productPrice: finalPriceDouble.toInt(), 
                             ),
                           ),
                         );
