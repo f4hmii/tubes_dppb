@@ -5,12 +5,14 @@ class Product {
   final String name;      
   final double price;     
   final String image;     
+  final String description;
 
   Product({
     required this.id,
     required this.name,
     required this.price,
     required this.image,
+    required this.description,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -38,6 +40,7 @@ class Product {
       name: json['name'] ?? json['title'] ?? 'Tanpa Nama',
       price: double.tryParse(json['price'].toString()) ?? 0.0,
       image: finalImage,
+      description: json['description'] ?? json['title'] ?? json['name'] ?? 'Tidak ada deskripsi',
     );
   }
 }

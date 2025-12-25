@@ -112,7 +112,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       children: [
                         const Text('Deskripsi', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
-                        Text(widget.product.name, style: TextStyle(color: Colors.grey[800], height: 1.5)), // Using name as description since cart_model Product doesn't have description
+                        Text(widget.product.description, style: TextStyle(color: Colors.grey[800], height: 1.5)),
                       ],
                     ),
                   ),

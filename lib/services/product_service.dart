@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/cart_model.dart'; // PAKAI INI
+import '../models/category_model.dart' as cat;
 import 'package:flutter/foundation.dart';
 class ProductService {
  final String baseUrl = kIsWeb 
@@ -41,16 +42,19 @@ class ProductService {
     }
   }
 
-  Future<List<Product>> getProductsByCategory(String category) async {
+  Future<List<Product>> getProductsByCategory(int categoryId) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/products/category/$category'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/products/category/$categoryId'),
+        headers: {'Accept': 'application/json'},
+      );
       
       if (response.statusCode == 200) {
          final dynamic jsonResponse = json.decode(response.body);
          // Pakai helper function yang SAMA, jadi aman kalau format JSON berubah
          return _parseProductList(jsonResponse);
       } else {
-        throw Exception('Gagal memuat produk kategori');
+        throw Exception('Gagal memuat produk kategori: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Error kategori: $e');
@@ -58,7 +62,7 @@ class ProductService {
   }
 
   // GET: Ambil Semua Kategori dari API Lokal
-  Future<List<String>> getAllCategories() async {
+  Future<List<cat.ProductCategory>> getAllCategories() async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/categories'),
@@ -78,15 +82,8 @@ class ProductService {
           throw Exception('Format response tidak sesuai');
         }
         
-        // Extract nama kategori dari response
-        return categories.map((category) {
-          if (category is Map<String, dynamic> && category.containsKey('name')) {
-            return category['name'].toString();
-          } else if (category is String) {
-            return category;
-          }
-          return '';
-        }).where((name) => name.isNotEmpty).toList();
+        // Parse ke ProductCategory model
+        return categories.map((catItem) => cat.ProductCategory.fromJson(catItem as Map<String, dynamic>)).toList();
       } else {
         throw Exception('Gagal memuat kategori: ${response.statusCode}');
       }

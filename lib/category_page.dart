@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'services/product_service.dart';
+import 'models/category_model.dart';
 
 class CategoryPage extends StatefulWidget {
   const CategoryPage({super.key});
@@ -10,7 +11,7 @@ class CategoryPage extends StatefulWidget {
 
 class _CategoryPageState extends State<CategoryPage> {
   final ProductService _productService = ProductService();
-  late Future<List<String>> _categoriesFuture;
+  late Future<List<ProductCategory>> _categoriesFuture;
 
   @override
   void initState() {
@@ -61,7 +62,7 @@ class _CategoryPageState extends State<CategoryPage> {
         ),
       ),
       // MENGGUNAKAN FUTURE BUILDER UNTUK DATA API
-      body: FutureBuilder<List<String>>(
+      body: FutureBuilder<List<ProductCategory>>(
         future: _categoriesFuture,
         builder: (context, snapshot) {
           // 1. Loading State
@@ -93,18 +94,19 @@ class _CategoryPageState extends State<CategoryPage> {
             padding: const EdgeInsets.all(16),
             itemCount: categories.length,
             itemBuilder: (context, index) {
-              // API mengembalikan List String: nama kategori
-              final String categoryName = categories[index];
+              // API mengembalikan List ProductCategory objects dengan ID dan name
+              final ProductCategory category = categories[index];
+              final String categoryName = category.name;
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 16.0),
                 child: InkWell(
                   onTap: () {
-                    // TODO: Nanti di sini navigasi ke halaman List Produk per Kategori
-                    // Contoh: _apiService.getProductsByCategory(categoryName);
+                    // Gunakan category ID untuk query produk berdasarkan kategori
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Membuka kategori: $categoryName')),
+                      SnackBar(content: Text('Membuka kategori: $categoryName (ID: ${category.id})')),
                     );
+                    // TODO: Nanti di sini bisa panggil: _productService.getProductsByCategory(category.id);
                   },
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
