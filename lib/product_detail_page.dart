@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Pastikan sudah 'flutter pub add intl'
-import '../models/cart_model.dart'; // Import Model Product - Use cart_model for consistency
+import 'models/product_model.dart';
 import 'checkout_page.dart';
 import 'cart_page.dart';
 
@@ -46,7 +46,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           onPressed: () => Navigator.pop(context),
         ),
         // PERUBAHAN 2: Menggunakan data dari Object Product
-        title: Text(widget.product.name, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text(widget.product.title, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
         actions: [
           IconButton(icon: const Icon(Icons.share_outlined, color: Colors.black), onPressed: () {}),
           Padding(
@@ -91,7 +91,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)
                         ),
                         const SizedBox(height: 8),
-                        Text(widget.product.name, style: const TextStyle(fontSize: 16, height: 1.3)),
+                        Text(widget.product.title, style: const TextStyle(fontSize: 16, height: 1.3)),
                         const SizedBox(height: 12),
                         const Row(children: [
                           Icon(Icons.star, color: Colors.amber, size: 18),
@@ -214,7 +214,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => CheckoutPage(
-                              productName: widget.product.name,
+                              productName: widget.product.title,
                               imageUrl: widget.product.image,
                               // Kirim sebagai INT bersih ke checkout
                               productPrice: finalPriceDouble.toInt(), 

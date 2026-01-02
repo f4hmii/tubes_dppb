@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-// PENTING: Gunakan cart_model.dart, jangan impor product_model.dart
-import '../models/cart_model.dart';
-import '../services/product_service.dart';
-import '../services/cart_service.dart';
-import '../services/wishlist_service.dart';
+import 'models/product_model.dart';
+import 'services/product_service.dart';
+import 'services/cart_service.dart';
+import 'services/wishlist_service.dart';
 import 'product_card.dart';
 import 'product_detail_page.dart';
 
@@ -54,7 +53,7 @@ class _HomeContentState extends State<HomeContent> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${product.name} berhasil ditambah ke keranjang'),
+          content: Text('${product.title} berhasil ditambah ke keranjang'),
           backgroundColor: Colors.green,
           duration: const Duration(seconds: 2),
         ),
@@ -78,7 +77,7 @@ class _HomeContentState extends State<HomeContent> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${product.name} ditambahkan ke wishlist'),
+          content: Text('${product.title} ditambahkan ke wishlist'),
           backgroundColor: Colors.green,
           duration: const Duration(seconds: 2),
         ),
@@ -102,7 +101,7 @@ class _HomeContentState extends State<HomeContent> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${product.name} dihapus dari wishlist'),
+          content: Text('${product.title} dihapus dari wishlist'),
           backgroundColor: Colors.orange,
           duration: const Duration(seconds: 2),
         ),
@@ -179,7 +178,7 @@ class _HomeContentState extends State<HomeContent> {
                   return ProductCard(
                     product: product,
                     imageUrl: product.image,
-                    title: product.name,
+                    title: product.title,
                     price: formatRupiah(product.price),
                     isFavorite: _favoriteStatus[product.id] ?? false, // Use actual favorite status
                     onFavoritePressed: (isFavorite) {

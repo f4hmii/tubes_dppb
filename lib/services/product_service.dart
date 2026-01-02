@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/cart_model.dart'; // PAKAI INI
+import '../models/product_model.dart';
 import '../models/category_model.dart' as cat;
 import 'package:flutter/foundation.dart';
 class ProductService {

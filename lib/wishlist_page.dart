@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Pastikan import intl
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
-import 'models/cart_model.dart'; // Import Model Product - Use cart_model for consistency
+import 'models/product_model.dart';
 import 'services/wishlist_service.dart';
-import 'services/product_service.dart';
 import 'product_detail_page.dart';
 
 class WishlistPage extends StatefulWidget {
@@ -16,7 +13,6 @@ class WishlistPage extends StatefulWidget {
 
 class _WishlistPageState extends State<WishlistPage> {
   final WishlistService _wishlistService = WishlistService();
-  final ProductService _productService = ProductService();
 
   // PERBAIKAN 1: Ubah tipe data jadi List<Product>
   List<Product> _wishlistItems = [];
@@ -40,11 +36,15 @@ class _WishlistPageState extends State<WishlistPage> {
 
   Future<void> _loadWishlistData() async {
     try {
-      // Try to load from API first
-      final products = await _wishlistService.getWishlist();
+      // Load from API
+      final wishlistData = await _wishlistService.getWishlist();
 
-      if (products.isNotEmpty) {
-        // If API returned products, use them
+      if (wishlistData.isNotEmpty) {
+        // Convert Map data to Product objects
+        final products = wishlistData
+            .map((item) => Product.fromJson(item['product'] ?? item))
+            .toList();
+
         if (mounted) {
           setState(() {
             _wishlistItems = products;
@@ -52,20 +52,10 @@ class _WishlistPageState extends State<WishlistPage> {
           });
         }
       } else {
-        // If API didn't return products (e.g., fallback to local storage),
-        // get the favorite product IDs and fetch those products
-        final prefs = await SharedPreferences.getInstance();
-        final localFavoritesJson = prefs.getString('favorites') ?? '[]';
-        final List<dynamic> localFavoritesList = json.decode(localFavoritesJson);
-        final List<int> favoriteIds = localFavoritesList.cast<int>();
-
-        // Fetch all products and filter by favorite IDs
-        final allProducts = await _productService.getAllProducts();
-        final favoriteProducts = allProducts.where((product) => favoriteIds.contains(product.id)).toList();
-
+        // If empty, show empty state
         if (mounted) {
           setState(() {
-            _wishlistItems = favoriteProducts;
+            _wishlistItems = [];
             _isLoading = false;
           });
         }
@@ -94,7 +84,7 @@ class _WishlistPageState extends State<WishlistPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${removedItem.name} dihapus dari wishlist'),
+          content: Text('${removedItem.title} dihapus dari wishlist'),
           backgroundColor: Colors.orange,
           action: SnackBarAction(
             label: 'BATAL',
@@ -201,7 +191,7 @@ class _WishlistPageState extends State<WishlistPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.name, // Akses via Model - cart_model uses 'name' instead of 'title'
+                    item.title,
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
