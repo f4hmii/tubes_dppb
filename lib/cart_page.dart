@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart'; // [WAJIB] Untuk kIsWeb
 import 'package:movr/models/cart_model.dart'; 
 import 'package:movr/services/cart_service.dart'; 
 import 'checkout_page.dart';
@@ -30,9 +29,13 @@ class _CartPageState extends State<CartPage> {
       return "https://via.placeholder.com/150"; 
     }
 
-    // 2. Base URL
-    // Kita pakai 127.0.0.1 karena Home Page Anda sukses pakai IP ini
-    String baseUrl = kIsWeb ? "http://127.0.0.1:8000" : "http://10.0.2.2:8000";
+    // Jika sudah URL absolut (http/https), pakai apa adanya
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+
+    // 2. Base URL (pakai host produksi)
+    const String baseUrl = "https://movr.kolab.top";
 
     // 3. PROSES PEMBERSIHAN PATH
     String cleanPath = imagePath;
@@ -53,27 +56,16 @@ class _CartPageState extends State<CartPage> {
       cleanPath = cleanPath.substring(1);
     }
 
-    // C. Hapus folder-folder awalan yang salah/dobel
-    // Urutan replace ini PENTING.
-    
-    // Hapus 'image-proxy/' jika sudah ada (supaya tidak dobel nanti)
+    // C. Hapus prefix yang dobel tapi tetap biarkan struktur asli path
     if (cleanPath.startsWith('image-proxy/')) {
       cleanPath = cleanPath.replaceFirst('image-proxy/', '');
     }
-    
-    // Hapus 'storage/' (INI PENYEBAB UTAMA ERROR ANDA)
-    if (cleanPath.startsWith('storage/')) {
-      cleanPath = cleanPath.replaceFirst('storage/', '');
-    }
-    
-    // Hapus 'public/'
     if (cleanPath.startsWith('public/')) {
       cleanPath = cleanPath.replaceFirst('public/', '');
     }
 
-    // 4. HASIL AKHIR: PAKSA PAKAI /image-proxy/
-    // Format: http://127.0.0.1:8000/image-proxy/products/namafile.png
-    return "$baseUrl/image-proxy/$cleanPath";
+    // 4. Hasil akhir: langsung ke host produksi tanpa image-proxy
+    return "$baseUrl/$cleanPath";
   }
   // ------------------------------------------------------------------
 

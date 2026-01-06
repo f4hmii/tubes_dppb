@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+// Model keranjang dan produk
 
 class Product {
   final int id;
@@ -16,23 +16,30 @@ class Product {
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
-    String rawImage = json['image'] ?? '';
+    // Utamakan image_url jika sudah disediakan API (absolute)
+    String rawImage = json['image_url'] ?? json['image'] ?? '';
     String finalImage;
 
     if (rawImage.isEmpty) {
       finalImage = "https://via.placeholder.com/150";
     } else if (rawImage.startsWith('http')) {
+      // Paksa ke HTTPS jika host movr.kolab.top masih http
+      if (rawImage.startsWith('http://movr.kolab.top')) {
+        rawImage = rawImage.replaceFirst('http://', 'https://');
+      }
       finalImage = rawImage;
     } else {
-      // Using the specified proxy path: http://127.0.0.1:8000/image-proxy/
-      String baseUrl = kIsWeb ? "http://127.0.0.1:8000" : "http://10.0.2.2:8000";
-      String cleanPath = rawImage.replaceAll('public/', '').replaceAll('storage/', '');
+      // Gunakan host produksi (HTTPS) dan bersihkan prefix ganda seperlunya
+      const String baseUrl = "https://movr.kolab.top";
+      String cleanPath = rawImage;
       if (cleanPath.startsWith('/')) cleanPath = cleanPath.substring(1);
-      // Don't add 'products/' again if it's already in the path
-      if (!cleanPath.startsWith('products/')) {
-        cleanPath = 'products/$cleanPath';
+      if (cleanPath.startsWith('image-proxy/')) {
+        cleanPath = cleanPath.replaceFirst('image-proxy/', '');
       }
-      finalImage = "$baseUrl/image-proxy/$cleanPath";
+      if (cleanPath.startsWith('public/')) {
+        cleanPath = cleanPath.replaceFirst('public/', '');
+      }
+      finalImage = "$baseUrl/$cleanPath";
     }
 
     return Product(

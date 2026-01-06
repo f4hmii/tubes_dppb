@@ -4,9 +4,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 
 class ProfileService {
-  final String baseUrl = kIsWeb 
-      ? "http://127.0.0.1:8000/api/v1" 
-      : "http://10.0.2.2:8000/api/v1";
+  final String baseUrl = "https://movr.kolab.top/api/v1";
+
+  void _logResponse(http.Response response, String action) {
+    final method = response.request?.method ?? 'UNKNOWN';
+    final url = response.request?.url.toString() ?? 'N/A';
+    String body;
+    try {
+      final parsed = json.decode(response.body);
+      body = const JsonEncoder.withIndent('  ').convert(parsed);
+    } catch (_) {
+      body = response.body;
+    }
+    if (body.length > 1000) body = body.substring(0, 1000) + '...<truncated>';
+    print('[ProfileService][$action] ${method} ${url} | status=${response.statusCode}');
+    print('[ProfileService][$action] body:\n$body');
+  }
 
   Future<Map<String, String>> _getHeaders() async {
     final prefs = await SharedPreferences.getInstance();
@@ -25,6 +38,7 @@ class ProfileService {
       Uri.parse('$baseUrl/profile'),
       headers: await _getHeaders(),
     );
+    _logResponse(response, 'getProfile');
 
     if (response.statusCode == 200) {
       return json.decode(response.body);
@@ -41,6 +55,7 @@ class ProfileService {
       headers: await _getHeaders(),
       body: json.encode({'name': name, 'email': email}),
     );
+    _logResponse(response, 'updateProfile');
     return response.statusCode == 200;
   }
 
@@ -50,6 +65,7 @@ class ProfileService {
       headers: await _getHeaders(),
       body: json.encode(data),
     );
+    _logResponse(response, 'addAlamat');
     if (response.statusCode != 200) {
       throw Exception('Gagal menambah alamat');
     }
@@ -61,6 +77,7 @@ class ProfileService {
       Uri.parse('$baseUrl/profile/alamat/$id'),
       headers: await _getHeaders(),
     );
+    _logResponse(response, 'destroyAlamat');
 
     if (response.statusCode != 200) {
       throw Exception('Gagal menghapus alamat');

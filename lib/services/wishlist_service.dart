@@ -1,12 +1,25 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/foundation.dart';
+
 
 class WishlistService {
-  final String baseUrl = kIsWeb
-      ? "http://127.0.0.1:8000/api/v1"
-      : "http://10.0.0.2:8000/api/v1";
+  final String baseUrl = "https://movr.kolab.top/api/v1";
+
+  void _logResponse(http.Response response, String action) {
+    final method = response.request?.method ?? 'UNKNOWN';
+    final url = response.request?.url.toString() ?? 'N/A';
+    String body;
+    try {
+      final parsed = json.decode(response.body);
+      body = const JsonEncoder.withIndent('  ').convert(parsed);
+    } catch (_) {
+      body = response.body;
+    }
+    if (body.length > 1000) body = body.substring(0, 1000) + '...<truncated>';
+    print('[WishlistService][$action] ${method} ${url} | status=${response.statusCode}');
+    print('[WishlistService][$action] body:\n$body');
+  }
 
   // Get authentication token
   Future<String?> _getToken() async {
@@ -40,6 +53,7 @@ class WishlistService {
         Uri.parse('$baseUrl/favorites'),
         headers: headers,
       );
+      _logResponse(response, 'getWishlist');
 
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
@@ -65,6 +79,7 @@ class WishlistService {
           'product_id': productId,
         }),
       );
+      _logResponse(response, 'addToWishlist');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
@@ -87,6 +102,7 @@ class WishlistService {
         Uri.parse('$baseUrl/favorites/product/$productId'),
         headers: headers,
       );
+      _logResponse(response, 'removeFromWishlist');
 
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
@@ -110,6 +126,7 @@ class WishlistService {
         Uri.parse('$baseUrl/favorites/$favoriteId'),
         headers: headers,
       );
+      _logResponse(response, 'removeFavoriteById');
 
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
@@ -131,6 +148,7 @@ class WishlistService {
         Uri.parse('$baseUrl/favorites/clear'),
         headers: headers,
       );
+      _logResponse(response, 'clearAllFavorites');
 
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
@@ -152,6 +170,7 @@ class WishlistService {
         Uri.parse('$baseUrl/favorites/check/$productId'),
         headers: headers,
       );
+      _logResponse(response, 'isInWishlist');
 
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);

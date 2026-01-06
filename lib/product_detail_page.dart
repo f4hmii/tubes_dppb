@@ -23,6 +23,14 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   final int _quantity = 1; 
   final List<String> _sizes = ['S', 'M', 'L', 'XL', 'XXL'];
 
+  String _img(String url) {
+    if (url.isEmpty) return 'https://via.placeholder.com/150';
+    if (url.startsWith('http://movr.kolab.top')) {
+      return url.replaceFirst('http://', 'https://');
+    }
+    return url;
+  }
+
   // Helper untuk format rupiah (Sama seperti di Home)
   String formatRupiah(double price) {
     double finalPrice = price < 1000 ? price * 15000 : price;
@@ -72,7 +80,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     width: double.infinity,
                     color: Colors.white,
                     child: Image.network(
-                      widget.product.image, // Akses via Model
+                      _img(widget.product.image), // Pastikan https
                       fit: BoxFit.contain, 
                       errorBuilder: (c,e,s) => const Icon(Icons.error)
                     ),
@@ -168,13 +176,36 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 children: [
                   // Info Produk di Modal
                   Row(children: [
-                    Image.network(widget.product.image, width: 80, height: 80, fit: BoxFit.cover),
+                    SizedBox(
+                      width: 80,
+                      height: 80,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          _img(widget.product.image),
+                          fit: BoxFit.cover,
+                          errorBuilder: (c, e, s) => const Icon(Icons.broken_image),
+                        ),
+                      ),
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        formatRupiah(widget.product.price), // Pakai formatter lagi
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)
-                      )
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.product.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            formatRupiah(widget.product.price), // Pakai formatter lagi
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
                     ),
                     IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context))
                   ]),

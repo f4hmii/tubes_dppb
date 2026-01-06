@@ -2,13 +2,22 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class AuthService {
-  // -----------------------------------------------------------
-  // PENTING: Ganti URL sesuai device yang Anda pakai testing!
-  // -----------------------------------------------------------
-  // 1. Jika pakai Android Emulator: gunakan "http://10.0.2.2:8000"
-  // 2. Jika pakai HP Fisik (USB Debugging): gunakan IP LAN Laptop (misal "http://192.168.1.5:8000")
-  // 3. Jika pakai iOS Simulator: gunakan "http://127.0.0.1:8000"
-  final String baseUrl = "http://127.0.0.1:8000/api/v1";
+  final String baseUrl = "https://movr.kolab.top/api/v1";
+
+  void _logResponse(http.Response response, String action) {
+    final method = response.request?.method ?? 'UNKNOWN';
+    final url = response.request?.url.toString() ?? 'N/A';
+    String body;
+    try {
+      final parsed = json.decode(response.body);
+      body = const JsonEncoder.withIndent('  ').convert(parsed);
+    } catch (_) {
+      body = response.body;
+    }
+    if (body.length > 1000) body = body.substring(0, 1000) + '...<truncated>';
+    print('[AuthService][$action] ${method} ${url} | status=${response.statusCode}');
+    print('[AuthService][$action] body:\n$body');
+  }
 
   // POST: Login User
   // Di Laravel kita pakai 'email', bukan 'username'
@@ -25,9 +34,7 @@ class AuthService {
           'password': password,
         }),
       );
-
-      print('Debug Status Code: ${response.statusCode}');
-      print('Debug Response: ${response.body}');
+      _logResponse(response, 'login');
 
       final Map<String, dynamic> responseData = json.decode(response.body);
 
@@ -45,7 +52,7 @@ class AuthService {
         throw Exception('Terjadi kesalahan: ${responseData['message']}');
       }
     } catch (e) {
-      print("Error pada fungsi login: $e");
+      print('[AuthService][login] error=$e');
       rethrow;
     }
   }
@@ -67,9 +74,7 @@ class AuthService {
           'password': password,
         }),
       );
-
-      print('Debug Register Status: ${response.statusCode}');
-      print('Debug Register Body: ${response.body}');
+      _logResponse(response, 'register');
 
       final Map<String, dynamic> responseData = json.decode(response.body);
 

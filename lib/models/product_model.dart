@@ -20,25 +20,35 @@ class Product {
   factory Product.fromJson(Map<String, dynamic> json) {
     // TIPS: Idealnya Base URL ditaruh di config global, bukan di sini.
     // Tapi untuk sementara kita pakai ini agar konsisten dengan setup kamu.
-    const String baseUrl = "http://127.0.0.1:8000"; 
+    const String baseUrl = "https://movr.kolab.top"; 
     
     // Logika pembersihan URL Gambar
-    String rawImage = (json['image'] ?? json['image_url'] ?? '').toString().trim();
+    // Utamakan image_url dari API (sudah absolute dari accessor Laravel)
+    String rawImage = (json['image_url'] ?? json['image'] ?? '').toString().trim();
     String finalImage;
 
     if (rawImage.isEmpty) {
       finalImage = "https://via.placeholder.com/150"; // Gambar default jika kosong
     } else if (rawImage.startsWith('http')) {
+      // Paksa ke HTTPS jika host movr.kolab.top masih http
+      if (rawImage.startsWith('http://movr.kolab.top')) {
+        rawImage = rawImage.replaceFirst('http://', 'https://');
+      }
       finalImage = rawImage;
     } else {
       // Hapus leading slash '/' jika ada untuk menghindari double slash
      if (rawImage.startsWith('/')) {
         rawImage = rawImage.substring(1);
       }
-      
-      // JANGAN PAKAI /storage/ LAGI
-      // Ganti jadi endpoint proxy kita tadi
-      finalImage = "$baseUrl/image-proxy/$rawImage";
+      // Bersihkan prefix yang tidak diperlukan namun jangan hapus path storage
+      if (rawImage.startsWith('image-proxy/')) {
+        rawImage = rawImage.replaceFirst('image-proxy/', '');
+      }
+      if (rawImage.startsWith('public/')) {
+        rawImage = rawImage.replaceFirst('public/', '');
+      }
+      // Build URL langsung ke host produksi
+      finalImage = "$baseUrl/$rawImage";
     }
 
     return Product(

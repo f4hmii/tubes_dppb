@@ -1,12 +1,26 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 import '../models/product_model.dart';
 import '../models/category_model.dart' as cat;
-import 'package:flutter/foundation.dart';
+
 class ProductService {
- final String baseUrl = kIsWeb 
-      ? "http://127.0.0.1:8000/api/v1"   // <--- Perhatikan ada /v1
-      : "http://10.0.2.2:8000/api/v1";   // <--- Perhatikan ada /v1
+ final String baseUrl = "https://movr.kolab.top/api/v1";   
+
+  void _logResponse(http.Response response, String action) {
+    final method = response.request?.method ?? 'UNKNOWN';
+    final url = response.request?.url.toString() ?? 'N/A';
+    String body;
+    try {
+      final parsed = json.decode(response.body);
+      body = const JsonEncoder.withIndent('  ').convert(parsed);
+    } catch (_) {
+      body = response.body;
+    }
+    if (body.length > 1000) body = body.substring(0, 1000) + '...<truncated>';
+    print('[ProductService][$action] ${method} ${url} | status=${response.statusCode}');
+    print('[ProductService][$action] body:\n$body');
+  }
   // --- Helper Function (Biar tidak koding berulang-ulang) ---
   List<Product> _parseProductList(dynamic jsonResponse) {
     List<dynamic> data;
@@ -28,6 +42,7 @@ class ProductService {
         Uri.parse('$baseUrl/products'),
         headers: {'Accept': 'application/json'},
       );
+      _logResponse(response, 'getAllProducts');
 
       if (response.statusCode == 200) {
         final dynamic jsonResponse = json.decode(response.body);
@@ -37,7 +52,7 @@ class ProductService {
         throw Exception('Gagal memuat produk: ${response.statusCode}');
       }
     } catch (e) {
-      print("Error Service getAllProducts: $e");
+      debugPrint("Error Service getAllProducts: $e");
       throw Exception('Error koneksi: $e');
     }
   }
@@ -48,6 +63,7 @@ class ProductService {
         Uri.parse('$baseUrl/products/category/$categoryId'),
         headers: {'Accept': 'application/json'},
       );
+      _logResponse(response, 'getProductsByCategory');
       
       if (response.statusCode == 200) {
          final dynamic jsonResponse = json.decode(response.body);
@@ -68,6 +84,7 @@ class ProductService {
         Uri.parse('$baseUrl/categories'),
         headers: {'Accept': 'application/json'},
       );
+      _logResponse(response, 'getAllCategories');
       
       if (response.statusCode == 200) {
         final dynamic jsonResponse = json.decode(response.body);
@@ -88,7 +105,7 @@ class ProductService {
         throw Exception('Gagal memuat kategori: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error getAllCategories: $e');
+      debugPrint('Error getAllCategories: $e');
       throw Exception('Error kategori: $e');
     }
   }
